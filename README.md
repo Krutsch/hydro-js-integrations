@@ -16,8 +16,11 @@ import hydroJsPlugin from "hydro-js-integrations/vite";
 ...
 ```
 
+## Astro
+TBD
+
 ## Server (Deno + Hono example)
-- In general is being done via happy-dom preferably or jsdom alternately. The Renderer expects a index.html file in the project folder, but the path can be changed when calling the setDOMRenderer.
+- In general is being done via happy-dom preferably or jsdom alternately. Have a look at the src/server.ts file.
 
 ### Example
 > Server file
@@ -50,7 +53,7 @@ Deno.serve({ port: 3000 }, app.fetch);
 > ssr.ts
 ```js
 import library from "hydro-js-integrations/server";
-const { render, $, html, renderRootToString } = await library;
+const { render, html, renderRootToString } = await library;
 
 try {
   const decoder = new TextDecoder("utf-8");
@@ -65,3 +68,7 @@ export { renderRootToString };
 ```
 
 See here for an Integration with Vite: https://github.com/Krutsch/vite-ssr-hydrojs
+
+## Roadmap
+- add Astro
+- add ssr html string function to hydro-js, so that I do not have to rely on DOM implementations.
