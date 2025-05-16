@@ -16,12 +16,12 @@ export default function HYDROJS_PLUGIN() {
             if (code.startsWith(JSX_TOKEN_SEMICOLON)) {
                 if (options?.ssr) {
                     const hImport = "\nconst { h } = await library;\n";
-                    if (code.includes("hydro-js/server")) {
+                    if (code.includes("hydro-js-integrations/server")) {
                         code = code.replace(JSX_TOKEN_SEMICOLON, "");
-                        code = code.replace(/from ["']hydro-js\/server["']/, `from "hydro-js/server";${hImport}`);
+                        code = code.replace(/from ["']hydro-js-integrations\/server["']/, `from "hydro-js-integrations/server";${hImport}`);
                     }
                     else {
-                        code = code.replace(JSX_TOKEN_SEMICOLON, `import library from "hydro-js/server";${hImport}`);
+                        code = code.replace(JSX_TOKEN_SEMICOLON, `import library from "hydro-js-integrations/server";${hImport}`);
                     }
                 }
                 else {
