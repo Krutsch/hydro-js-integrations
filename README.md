@@ -1,14 +1,14 @@
 # Integrations Documention
 
 ## Getting started  
-```
-$ npm i hydro-js-integrations
+```sh
+npm i hydro-js-integrations
 ```
 
 
 ## Vite
 > vite.config.ts
-```
+```js
 import hydroJsPlugin from "hydro-js-integrations/vite";
 
 ...
