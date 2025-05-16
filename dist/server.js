@@ -4,14 +4,15 @@ let serializer;
 const library = new Promise((resolve) => setDOMRenderer().then(() => import("hydro-js").then((lib) => {
     resolve({ ...lib, renderToString, setDOMRenderer, renderRootToString });
 })));
-async function setDOMRenderer(engine = "happy-dom") {
+async function setDOMRenderer(engine = "happy-dom", options = []) {
     let window;
     if (engine === "happy-dom") {
-        window = new Window({ url: "https://localhost:8080" });
+        window = new Window(...options);
+        window.document.write("");
         await window.happyDOM.waitUntilComplete();
     }
     else if (engine === "jsdom") {
-        window = new JSDOM().window;
+        window = new JSDOM(...options).window;
         serializer = new window.XMLSerializer();
     }
     // @ts-expect-error

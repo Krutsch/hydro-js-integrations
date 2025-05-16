@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { Window } from "happy-dom";
 import { JSDOM } from "jsdom";
 
@@ -16,14 +17,15 @@ const library = new Promise((resolve) =>
     setDOMRenderer: typeof setDOMRenderer;
   }
 >;
-async function setDOMRenderer(engine = "happy-dom") {
+async function setDOMRenderer(engine = "happy-dom", options = []) {
   let window;
 
   if (engine === "happy-dom") {
-    window = new Window({ url: "https://localhost:8080" });
+    window = new Window(...options);
+    window.document.write("");
     await window.happyDOM.waitUntilComplete();
   } else if (engine === "jsdom") {
-    window = new JSDOM().window;
+    window = new JSDOM(...options).window;
     serializer = new window.XMLSerializer();
   }
 
