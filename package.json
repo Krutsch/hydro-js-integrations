@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "happy-dom": "^17.4.7",
-    "hydro-js": "^1.8.2",
+    "hydro-js": "^1.8.3",
     "jsdom": "^26.1.0"
   }
 }
