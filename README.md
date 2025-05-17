@@ -18,7 +18,10 @@ import hydroJsPlugin from "hydro-js-integrations/vite";
 Have a look here for an Integration with Vite: https://github.com/Krutsch/vite-ssr-hydrojs
 
 ## Astro
-TBD
+in progress
+
+## Fresh
+after 2.0 release
 
 ## Server (Deno + Hono example)
 - In general is being done via happy-dom preferably or jsdom alternately. Have a look at the src/server.ts file.
@@ -71,3 +74,4 @@ export { renderRootToString };
 ## Roadmap
 - add Astro
 - add ssr html string function to hydro-js, so that I do not have to rely on DOM implementations.
+- add Fresh
