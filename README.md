@@ -15,6 +15,7 @@ import hydroJsPlugin from "hydro-js-integrations/vite";
   plugins: [hydroJsPlugin()],
 ...
 ```
+Have a look here for an Integration with Vite: https://github.com/Krutsch/vite-ssr-hydrojs
 
 ## Astro
 TBD
@@ -66,8 +67,6 @@ try {
 
 export { renderRootToString };
 ```
-
-See here for an Integration with Vite: https://github.com/Krutsch/vite-ssr-hydrojs
 
 ## Roadmap
 - add Astro
