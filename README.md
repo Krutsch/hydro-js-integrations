@@ -81,5 +81,5 @@ export { renderRootToString };
 ```
 
 ## Roadmap
-- improve astro hydro-js import
+- improve astro: do not rely on globalThis
 - add ssr html string function to hydro-js, so that I do not have to rely on DOM implementations.

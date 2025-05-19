@@ -12,7 +12,7 @@ export default function (): AstroIntegration {
       }) => {
         injectScript(
           "before-hydration",
-          `globalThis.hydroJS = import("hydro-js");`
+          `globalThis.hydroJS = await import("hydro-js");`
         );
         injectScript(
           "page-ssr",
