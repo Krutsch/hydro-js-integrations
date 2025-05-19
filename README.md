@@ -9,16 +9,28 @@ npm i hydro-js-integrations
 ## Vite
 > vite.config.ts
 ```js
-import hydroJsPlugin from "hydro-js-integrations/vite";
+import hydroJS from "hydro-js-integrations/vite";
 
 ...
-  plugins: [hydroJsPlugin()],
+  plugins: [hydroJS()],
 ...
 ```
 Have a look here for an Integration with Vite: https://github.com/Krutsch/vite-ssr-hydrojs
 
 ## Astro
-TBD
+Either start a new project like:
+```sh
+npm create astro@latest -- --template krutsch/astro-hydro-js
+```
+or add the changes to the config:
+> astro.config.ts
+```js
+import hydroJS from "hydro-js-integrations/astro";
+
+...
+integrations: [hydroJS()],
+...
+```
 
 ## Server (Deno + Hono example)
 - In general is being done via happy-dom preferably or jsdom alternately. Have a look at the src/server.ts file.
@@ -69,5 +81,5 @@ export { renderRootToString };
 ```
 
 ## Roadmap
-- add Astro
+- improve astro hydro-js import
 - add ssr html string function to hydro-js, so that I do not have to rely on DOM implementations.

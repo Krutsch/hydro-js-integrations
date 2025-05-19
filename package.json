@@ -1,6 +1,6 @@
 {
   "name": "hydro-js-integrations",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Integrations for Vite and Astro and more TBC",
   "type": "module",
   "exports": {
@@ -15,9 +15,9 @@
       "default": "./dist/vite.js"
     },
     "./astro": {
-      "types": "./dist/astro.d.ts",
-      "import": "./dist/astro.js",
-      "default": "./dist/astro.js"
+      "types": "./dist/astro/index.d.ts",
+      "import": "./dist/astro/index.js",
+      "default": "./dist/astro/index.js"
     }
   },
   "scripts": {
@@ -28,10 +28,13 @@
     "url": "git+https://github.com/Krutsch/hydro-js-integrations.git"
   },
   "keywords": [
-    "vite",
-    "astro",
     "ssr",
-    "jsx"
+    "jsx",
+    "vite",
+    "astro-integration",
+    "astro-component",
+    "renderer",
+    "hydro-js"
   ],
   "author": "Fabian Klingenberg <klingenberg.fabian@gmx.de> (https://klingenberg.works/)",
   "license": "MIT",
@@ -42,6 +45,7 @@
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
     "@types/node": "^22.15.18",
+    "astro": "^5.7.13",
     "typescript": "^5.8.3",
     "vite": "^6.3.5"
   },
