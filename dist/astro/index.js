@@ -7,8 +7,8 @@ export default function () {
                 injectScript("page-ssr", 'import library from "hydro-js-integrations/server"; globalThis.hydroJS = await library;');
                 addRenderer({
                     name: "astro-hydro-js",
-                    clientEntrypoint: "./client.js",
-                    serverEntrypoint: "./server.js",
+                    clientEntrypoint: "hydro-js-integrations/astro/client.js",
+                    serverEntrypoint: "hydro-js-integrations/astro/server.js",
                 });
                 updateConfig({
                     vite: {

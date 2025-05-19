@@ -1,6 +1,6 @@
 {
   "name": "hydro-js-integrations",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Integrations for Vite and Astro and more TBC",
   "type": "module",
   "exports": {
@@ -18,6 +18,16 @@
       "types": "./dist/astro/index.d.ts",
       "import": "./dist/astro/index.js",
       "default": "./dist/astro/index.js"
+    },
+    "./astro/client.js": {
+      "types": "./dist/astro/client.d.ts",
+      "import": "./dist/astro/client.js",
+      "default": "./dist/astro/client.js"
+    },
+    "./astro/server.js": {
+      "types": "./dist/astro/server.d.ts",
+      "import": "./dist/astro/server.js",
+      "default": "./dist/astro/server.js"
     }
   },
   "scripts": {

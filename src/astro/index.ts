@@ -20,8 +20,8 @@ export default function (): AstroIntegration {
         );
         addRenderer({
           name: "astro-hydro-js",
-          clientEntrypoint: "./client.js",
-          serverEntrypoint: "./server.js",
+          clientEntrypoint: "hydro-js-integrations/astro/client.js",
+          serverEntrypoint: "hydro-js-integrations/astro/server.js",
         });
         updateConfig({
           vite: {
