@@ -1,6 +1,5 @@
 import { html, render, h, setReuseElements } from "hydro-js";
 setReuseElements(false);
-globalThis.hFn = h;
 
 let elementMap = new WeakMap<HTMLElement, ReturnType<typeof h>>();
 

@@ -1,6 +1,5 @@
-import { html, render, h, setReuseElements } from "hydro-js";
+import { html, render, setReuseElements } from "hydro-js";
 setReuseElements(false);
-globalThis.hFn = h;
 let elementMap = new WeakMap();
 export default (element) => async (Component, props, { default: children, ...slotted }) => {
     if (!element.hasAttribute("ssr"))

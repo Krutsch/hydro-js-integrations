@@ -2,15 +2,13 @@ import type {
   AstroComponentMetadata,
   NamedSSRLoadedRendererValue,
 } from "astro";
-import type library from "../server";
+import library from "../server";
 
 async function check(Component: any) {
   if (typeof Component !== "function") return false;
   const inside = Component.toString();
   return (
-    inside.includes("hFn") ||
-    inside.includes("html`") ||
-    inside.includes("html$")
+    inside.includes("h") || inside.includes("html`") || inside.includes("html$")
   );
 }
 
@@ -20,10 +18,7 @@ async function renderToStaticMarkup(
   { default: children, ...slotted }: Record<string, any>,
   metadata?: AstroComponentMetadata
 ) {
-  const { h, setGlobalSchedule, html, render } = globalThis.hydroJS as Awaited<
-    typeof library
-  >;
-  globalThis.hFn = h;
+  const { setGlobalSchedule, html, render, renderToString } = await library;
 
   setGlobalSchedule(false);
 
@@ -44,7 +39,7 @@ async function renderToStaticMarkup(
   const wrapper = html`<div>${node}</div>` as HTMLDivElement;
   const unmount = render(wrapper);
 
-  const nodeHTML = hydroJS.renderToString(wrapper);
+  const nodeHTML = renderToString(wrapper);
   unmount();
   return { html: nodeHTML };
 }

@@ -1,6 +1,6 @@
 const JSX_TOKEN = "/*Add JSX*/";
 const JSX_TOKEN_SEMICOLON = `${JSX_TOKEN};`;
-export default function HYDROJS_PLUGIN() {
+export default function hydroJS() {
     return {
         name: "hydro-js-plugin",
         config() {

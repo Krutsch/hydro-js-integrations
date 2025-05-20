@@ -1,14 +1,12 @@
+import library from "../server";
 async function check(Component) {
     if (typeof Component !== "function")
         return false;
     const inside = Component.toString();
-    return (inside.includes("hFn") ||
-        inside.includes("html`") ||
-        inside.includes("html$"));
+    return (inside.includes("h") || inside.includes("html`") || inside.includes("html$"));
 }
 async function renderToStaticMarkup(Component, props, { default: children, ...slotted }, metadata) {
-    const { h, setGlobalSchedule, html, render } = globalThis.hydroJS;
-    globalThis.hFn = h;
+    const { setGlobalSchedule, html, render, renderToString } = await library;
     setGlobalSchedule(false);
     const needsHydrate = metadata?.astroStaticSlot ? !!metadata.hydrate : true;
     const tagName = needsHydrate ? "astro-slot" : "astro-static-slot";
@@ -21,7 +19,7 @@ async function renderToStaticMarkup(Component, props, { default: children, ...sl
     node.append(...slots);
     const wrapper = html `<div>${node}</div>`;
     const unmount = render(wrapper);
-    const nodeHTML = hydroJS.renderToString(wrapper);
+    const nodeHTML = renderToString(wrapper);
     unmount();
     return { html: nodeHTML };
 }

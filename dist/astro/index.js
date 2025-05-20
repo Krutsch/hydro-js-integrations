@@ -1,10 +1,9 @@
+import hydroJS from "../vite";
 export default function () {
     return {
         name: "astro-hydro-js",
         hooks: {
-            "astro:config:setup": async ({ addRenderer, updateConfig, injectScript, }) => {
-                injectScript("before-hydration", `globalThis.hydroJS = await import("hydro-js");`);
-                injectScript("page-ssr", 'import library from "hydro-js-integrations/server"; globalThis.hydroJS = await library;');
+            "astro:config:setup": async ({ addRenderer, updateConfig }) => {
                 addRenderer({
                     name: "astro-hydro-js",
                     clientEntrypoint: "hydro-js-integrations/astro/client.js",
@@ -12,12 +11,20 @@ export default function () {
                 });
                 updateConfig({
                     vite: {
-                        esbuild: {
-                            jsxFactory: "hFn",
-                            jsxFragment: "hFn",
-                        },
+                        plugins: [hydroJS()],
                     },
                 });
+            },
+            "astro:config:done": ({ logger, config }) => {
+                const knownJsxRenderers = [
+                    "@astrojs/react",
+                    "@astrojs/preact",
+                    "@astrojs/solid-js",
+                ];
+                const enabledKnownJsxRenderers = config.integrations.filter((renderer) => knownJsxRenderers.includes(renderer.name));
+                if (enabledKnownJsxRenderers.length > 1) {
+                    logger.warn("More than one JSX renderer is enabled. This will lead to unexpected behavior for now.");
+                }
             },
         },
     };

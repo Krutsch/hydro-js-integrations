@@ -3,7 +3,7 @@ import { Plugin } from "vite";
 const JSX_TOKEN = "/*Add JSX*/";
 const JSX_TOKEN_SEMICOLON = `${JSX_TOKEN};`;
 
-export default function HYDROJS_PLUGIN(): Plugin {
+export default function hydroJS(): Plugin {
   return {
     name: "hydro-js-plugin",
     config() {
