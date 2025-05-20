@@ -1,6 +1,6 @@
 {
   "name": "hydro-js-integrations",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Integrations for Vite and Astro and more TBC",
   "type": "module",
   "exports": {

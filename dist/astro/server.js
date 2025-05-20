@@ -1,9 +1,11 @@
 import library from "../server";
 async function check(Component) {
-    if (typeof Component !== "function")
-        return false;
     const inside = Component.toString();
-    return (inside.includes("h") || inside.includes("html`") || inside.includes("html$"));
+    return (typeof Component === "string" ||
+        (typeof Component === "function" &&
+            (inside.includes("h") ||
+                inside.includes("html`") ||
+                inside.includes("html$"))));
 }
 async function renderToStaticMarkup(Component, props, { default: children, ...slotted }, metadata) {
     const { setGlobalSchedule, html, render, renderToString } = await library;
@@ -15,7 +17,9 @@ async function renderToStaticMarkup(Component, props, { default: children, ...sl
         const name = slotName(key);
         slots.push(html `<${tagName} name="${name}">${value}</${tagName}>`);
     }
-    const node = Component(props, children);
+    const node = typeof Component === "function"
+        ? Component(props, children)
+        : html `<${Component} ${props}>${children}</${Component}>`;
     node.append(...slots);
     const wrapper = html `<div>${node}</div>`;
     const unmount = render(wrapper);
@@ -27,7 +31,7 @@ function slotName(str) {
     return str.trim().replace(/[-_]([a-z])/g, (_, w) => w.toUpperCase());
 }
 const renderer = {
-    name: "hydro-jsx",
+    name: "hydro-js",
     check,
     renderToStaticMarkup,
     supportsAstroStaticSlot: false,

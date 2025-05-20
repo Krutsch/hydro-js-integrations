@@ -5,10 +5,13 @@ import type {
 import library from "../server";
 
 async function check(Component: any) {
-  if (typeof Component !== "function") return false;
   const inside = Component.toString();
   return (
-    inside.includes("h") || inside.includes("html`") || inside.includes("html$")
+    typeof Component === "string" ||
+    (typeof Component === "function" &&
+      (inside.includes("h") ||
+        inside.includes("html`") ||
+        inside.includes("html$")))
   );
 }
 
@@ -33,7 +36,10 @@ async function renderToStaticMarkup(
     );
   }
 
-  const node = Component(props, children);
+  const node =
+    typeof Component === "function"
+      ? Component(props, children)
+      : html`<${Component} ${props}>${children}</${Component}>`;
   node.append(...slots);
 
   const wrapper = html`<div>${node}</div>` as HTMLDivElement;
@@ -49,7 +55,7 @@ function slotName(str: string) {
 }
 
 const renderer: NamedSSRLoadedRendererValue = {
-  name: "hydro-jsx",
+  name: "hydro-js",
   check,
   renderToStaticMarkup,
   supportsAstroStaticSlot: false,

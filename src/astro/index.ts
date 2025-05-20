@@ -7,7 +7,7 @@ export default function (): AstroIntegration {
     hooks: {
       "astro:config:setup": async ({ addRenderer, updateConfig }) => {
         addRenderer({
-          name: "astro-hydro-js",
+          name: "hydro-js",
           clientEntrypoint: "hydro-js-integrations/astro/client.js",
           serverEntrypoint: "hydro-js-integrations/astro/server.js",
         });
