@@ -1,4 +1,4 @@
-import hydroJS from "../vite";
+import hydroJS from "../vite.js";
 export default function () {
     return {
         name: "astro-hydro-js",

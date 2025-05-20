@@ -1,4 +1,4 @@
-import hydroJS from "../vite";
+import hydroJS from "../vite.js";
 import type { AstroIntegration } from "astro";
 
 export default function (): AstroIntegration {
