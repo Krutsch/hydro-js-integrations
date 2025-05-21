@@ -21,10 +21,12 @@ async function setRendererInternal(engine = renderer, options = []) {
         serializer = new window.XMLSerializer();
     }
     renderer = engine;
-    // @ts-expect-error
-    globalThis.window = window;
-    // @ts-expect-error
-    globalThis.document = window.document;
+    if (!("window" in globalThis)) {
+        // @ts-expect-error
+        globalThis.window = window;
+        // @ts-expect-error
+        globalThis.document = window.document;
+    }
 }
 function renderRootToString() {
     const html = library.$("html");

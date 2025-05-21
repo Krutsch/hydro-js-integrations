@@ -16,7 +16,6 @@ export default (element) => async (Component, props, { default: children, ...slo
         slots.push(elem);
     }
     const place = elementMap.get(element);
-    // const node = html``
     const node = Component(props, children);
     let unmount;
     if (place) {
