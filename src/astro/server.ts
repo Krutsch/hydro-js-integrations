@@ -2,7 +2,9 @@ import type {
   AstroComponentMetadata,
   NamedSSRLoadedRendererValue,
 } from "astro";
-import library from "../server";
+import { renderToString, getLibrary } from "../server";
+const { setGlobalSchedule, html, render } = await getLibrary();
+setGlobalSchedule(false);
 
 async function check(Component: any) {
   const inside = Component.toString();
@@ -21,10 +23,6 @@ async function renderToStaticMarkup(
   { default: children, ...slotted }: Record<string, any>,
   metadata?: AstroComponentMetadata
 ) {
-  const { setGlobalSchedule, html, render, renderToString } = await library;
-
-  setGlobalSchedule(false);
-
   const needsHydrate = metadata?.astroStaticSlot ? !!metadata.hydrate : true;
   const tagName = needsHydrate ? "astro-slot" : "astro-static-slot";
 

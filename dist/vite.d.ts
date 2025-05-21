@@ -1,2 +1,5 @@
 import { Plugin } from "vite";
-export default function hydroJS(): Plugin;
+import type { getRenderer } from "./server";
+export default function hydroJS({ renderer, }?: {
+    renderer?: ReturnType<typeof getRenderer>;
+}): Plugin;

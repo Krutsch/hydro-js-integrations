@@ -1,4 +1,6 @@
-import library from "../server";
+import { renderToString, getLibrary } from "../server";
+const { setGlobalSchedule, html, render } = await getLibrary();
+setGlobalSchedule(false);
 async function check(Component) {
     const inside = Component.toString();
     return (typeof Component === "string" ||
@@ -8,8 +10,6 @@ async function check(Component) {
                 inside.includes("html$"))));
 }
 async function renderToStaticMarkup(Component, props, { default: children, ...slotted }, metadata) {
-    const { setGlobalSchedule, html, render, renderToString } = await library;
-    setGlobalSchedule(false);
     const needsHydrate = metadata?.astroStaticSlot ? !!metadata.hydrate : true;
     const tagName = needsHydrate ? "astro-slot" : "astro-static-slot";
     const slots = [];

@@ -1,5 +1,5 @@
 import hydroJS from "../vite.js";
-export default function () {
+export default function ({ renderer, } = {}) {
     return {
         name: "astro-hydro-js",
         hooks: {
@@ -11,7 +11,7 @@ export default function () {
                 });
                 updateConfig({
                     vite: {
-                        plugins: [hydroJS()],
+                        plugins: [hydroJS({ renderer })],
                     },
                 });
             },

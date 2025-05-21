@@ -1,7 +1,10 @@
+import type { getRenderer } from "../server.js";
 import hydroJS from "../vite.js";
 import type { AstroIntegration } from "astro";
 
-export default function (): AstroIntegration {
+export default function ({
+  renderer,
+}: { renderer?: ReturnType<typeof getRenderer> } = {}): AstroIntegration {
   return {
     name: "astro-hydro-js",
     hooks: {
@@ -13,7 +16,7 @@ export default function (): AstroIntegration {
         });
         updateConfig({
           vite: {
-            plugins: [hydroJS()],
+            plugins: [hydroJS({ renderer })],
           },
         });
       },

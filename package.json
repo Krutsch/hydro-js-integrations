@@ -1,6 +1,6 @@
 {
   "name": "hydro-js-integrations",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Integrations for Vite and Astro and more TBC",
   "type": "module",
   "exports": {
@@ -54,14 +54,14 @@
   "homepage": "https://github.com/Krutsch/hydro-js-integrations#readme",
   "devDependencies": {
     "@types/jsdom": "^21.1.7",
-    "@types/node": "^22.15.19",
+    "@types/node": "^22.15.21",
     "astro": "^5.7.13",
     "typescript": "^5.8.3",
     "vite": "^6.3.5"
   },
   "dependencies": {
     "happy-dom": "^17.4.7",
-    "hydro-js": "^1.8.3",
+    "hydro-js": "^1.8.4",
     "jsdom": "^26.1.0"
   }
 }

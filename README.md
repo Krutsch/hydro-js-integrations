@@ -65,8 +65,8 @@ Deno.serve({ port: 3000 }, app.fetch);
 
 > ssr.ts
 ```js
-import library from "hydro-js-integrations/server";
-const { render, html, renderRootToString } = await library;
+import { renderRootToString, getLibrary } from "hydro-js-integrations/server";
+const { render, html } = await getLibrary();
 
 try {
   const decoder = new TextDecoder("utf-8");
