@@ -23,7 +23,6 @@ export default (element: HTMLElement) =>
     }
 
     const place = elementMap.get(element);
-    // const node = html``
     const node = Component(props, children);
     let unmount: ReturnType<typeof render>;
 

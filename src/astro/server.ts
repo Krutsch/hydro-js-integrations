@@ -36,8 +36,13 @@ async function renderToStaticMarkup(
 
   const node =
     typeof Component === "function"
-      ? Component(props, children)
-      : html`<${Component} ${props}>${children}</${Component}>`;
+      ? Component({
+          ...props,
+          ...(children ? { children: html`${String(children)}` } : {}),
+        })
+      : html`<${Component} ${props}>${
+          children ? String(children) : ""
+        }</${Component}>`;
   node.append(...slots);
 
   const wrapper = html`<div>${node}</div>` as HTMLDivElement;

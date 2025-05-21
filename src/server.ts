@@ -36,10 +36,12 @@ async function setRendererInternal(
 
   renderer = engine;
 
-  // @ts-expect-error
-  globalThis.window = window;
-  // @ts-expect-error
-  globalThis.document = window.document;
+  if (!("window" in globalThis)) {
+    // @ts-expect-error
+    globalThis.window = window;
+    // @ts-expect-error
+    globalThis.document = window.document;
+  }
 }
 
 function renderRootToString() {
