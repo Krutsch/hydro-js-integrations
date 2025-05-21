@@ -16,17 +16,24 @@ export default (element) => async (Component, props, { default: children, ...slo
         slots.push(elem);
     }
     const place = elementMap.get(element);
-    const node = Component(props, children);
+    const node = typeof Component === "function"
+        ? Component({
+            ...props,
+            ...(children ? { children: html `${String(children)}` } : {}),
+        })
+        : html `<${Component} ${props}>${children ? String(children) : ""}</${Component}>`;
+    node.append(...slots);
     let unmount;
     if (place) {
         unmount = render(node, place);
     }
     else {
-        const template = document.createElement("template");
+        const div = document.createElement("span");
+        div.style.display = "contents";
         const children = Array.from(element.childNodes);
-        element.insertBefore(template, null);
-        template.append(...children);
-        unmount = render(node, template);
+        element.insertBefore(div, null);
+        div.append(...children);
+        unmount = render(node, div);
     }
     elementMap.set(element, node);
     element.addEventListener("astro:unmount", () => unmount(), {

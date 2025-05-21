@@ -1,18 +1,11 @@
 import { Window } from "happy-dom";
 import { JSDOM } from "jsdom";
 
-let serializer: XMLSerializer;
 let renderer: "happy-dom" | "jsdom" = "happy-dom";
-let library: typeof import("hydro-js");
 
 function getLibrary(): Promise<typeof import("hydro-js")> {
   return new Promise((resolve) =>
-    setRendererInternal(renderer).then(() =>
-      import("hydro-js").then((lib) => {
-        library = lib;
-        return resolve(lib);
-      })
-    )
+    setRendererInternal(renderer).then(() => import("hydro-js").then(resolve))
   );
 }
 async function setRendererInternal(
@@ -31,7 +24,6 @@ async function setRendererInternal(
     window = new JSDOM(
       ...(options as unknown as ConstructorParameters<typeof JSDOM>)
     ).window;
-    serializer = new window.XMLSerializer();
   }
 
   renderer = engine;
@@ -45,19 +37,18 @@ async function setRendererInternal(
 }
 
 function renderRootToString() {
-  const html = library.$("html")!;
-  return renderer === "happy-dom"
-    ? html.getHTML({
-        serializableShadowRoots: true,
-      })
-    : serializer.serializeToString(html.ownerDocument);
+  return (
+    document.documentElement.getHTML?.({
+      serializableShadowRoots: true,
+    }) ?? new window.XMLSerializer().serializeToString(document)
+  );
 }
 function renderToString(elem: Element) {
-  return renderer === "happy-dom"
-    ? elem.getHTML({
-        serializableShadowRoots: true,
-      })
-    : serializer.serializeToString(elem);
+  return (
+    elem.getHTML?.({
+      serializableShadowRoots: true,
+    }) ?? new window.XMLSerializer().serializeToString(elem)
+  );
 }
 
 function setRenderer(newRenderer: typeof renderer) {
