@@ -81,4 +81,4 @@ export { renderRootToString };
 ```
 
 ## Roadmap
-- add ssr html string function to hydro-js, so that I do not have to rely on DOM implementations.
+- add ssr html string function to hydro-js for improved hydration
