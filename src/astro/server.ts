@@ -34,15 +34,20 @@ async function renderToStaticMarkup(
     );
   }
 
-  const node =
+  let node =
     typeof Component === "function"
-      ? Component({
+      ? (Component({
           ...props,
           ...(children ? { children: html`${String(children)}` } : {}),
-        })
+        }) as ReturnType<typeof html>)
       : html`<${Component} ${props}>${
           children ? String(children) : ""
         }</${Component}>`;
+  if (isTextNode(node)) {
+    const fragment = new DocumentFragment();
+    fragment.append(node);
+    node = fragment;
+  }
   node.append(...slots);
 
   const wrapper = html`<div>${node}</div>` as HTMLDivElement;
@@ -55,6 +60,10 @@ async function renderToStaticMarkup(
 
 function slotName(str: string) {
   return str.trim().replace(/[-_]([a-z])/g, (_, w) => w.toUpperCase());
+}
+
+function isTextNode(node: Node): node is Text {
+  return (node as Text).splitText !== undefined;
 }
 
 const renderer: NamedSSRLoadedRendererValue = {

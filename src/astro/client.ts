@@ -39,12 +39,12 @@ export default (element: HTMLElement) =>
     if (place) {
       unmount = render(node, place);
     } else {
-      const div = document.createElement("span");
-      div.style.display = "contents";
+      const span = document.createElement("span");
+      span.style.display = "contents";
       const children = Array.from(element.childNodes);
-      element.insertBefore(div, null);
-      div.append(...children);
-      unmount = render(node, div);
+      element.appendChild(span);
+      span.append(...children);
+      unmount = render(node, span);
     }
 
     elementMap.set(element, node);
