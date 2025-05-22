@@ -32,6 +32,9 @@ integrations: [hydroJS()],
 ...
 ```
 
+## Fresh
+- TBC, after 2.0 Release
+
 ## Server (Deno + Hono example)
 - In general is being done via happy-dom preferably or jsdom alternately. Have a look at the src/server.ts file.
 
@@ -82,3 +85,4 @@ export { renderRootToString };
 
 ## Roadmap
 - add ssr html string function to hydro-js for improved hydration
+- add Fresh and Next.js
