@@ -45,7 +45,9 @@ import type { HtmlEscapedString } from "hono/utils/html";
 import { Hono } from "hono";
 import { serveStatic } from "hono/deno";
 import { renderToReadableStream } from "hono/jsx/streaming";
-import { renderRootToString } from "./ssr.ts";
+import "./ssr.ts";
+import { renderRootToString } from "hydro-js-integrations/server";
+
 
 const app = new Hono();
 app.use("*", serveStatic({ root: "/build" })); // Optional: where the static files are
@@ -79,8 +81,6 @@ try {
 } catch (err) {
   console.error(err);
 }
-
-export { renderRootToString };
 ```
 
 ## Roadmap
