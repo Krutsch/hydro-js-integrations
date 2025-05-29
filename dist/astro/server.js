@@ -17,12 +17,17 @@ async function renderToStaticMarkup(Component, props, { default: children, ...sl
         const name = slotName(key);
         slots.push(html `<${tagName} name="${name}">${value}</${tagName}>`);
     }
-    const node = typeof Component === "function"
+    let node = typeof Component === "function"
         ? Component({
             ...props,
             ...(children ? { children: html `${String(children)}` } : {}),
         })
         : html `<${Component} ${props}>${children ? String(children) : ""}</${Component}>`;
+    if (isTextNode(node)) {
+        const fragment = new DocumentFragment();
+        fragment.append(node);
+        node = fragment;
+    }
     node.append(...slots);
     const wrapper = html `<div>${node}</div>`;
     const unmount = render(wrapper);
@@ -32,6 +37,9 @@ async function renderToStaticMarkup(Component, props, { default: children, ...sl
 }
 function slotName(str) {
     return str.trim().replace(/[-_]([a-z])/g, (_, w) => w.toUpperCase());
+}
+function isTextNode(node) {
+    return node.splitText !== undefined;
 }
 const renderer = {
     name: "hydro-js",
