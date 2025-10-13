@@ -1,4 +1,3 @@
-import { Plugin } from "vite";
 import type { getRenderer } from "./server";
 
 const JSX_TOKEN = "/*Add JSX*/";
@@ -6,7 +5,7 @@ const JSX_TOKEN_SEMICOLON = `${JSX_TOKEN};`;
 
 export default function hydroJS({
   renderer,
-}: { renderer?: ReturnType<typeof getRenderer> } = {}): Plugin {
+}: { renderer?: ReturnType<typeof getRenderer> } = {}) {
   return {
     name: "hydro-js-plugin",
     config() {
