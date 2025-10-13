@@ -84,5 +84,4 @@ try {
 ```
 
 ## Roadmap
-- add ssr html string function to hydro-js for improved hydration
 - add Fresh and Next.js
