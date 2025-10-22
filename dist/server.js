@@ -1,18 +1,19 @@
 import { Window } from "happy-dom";
 import { JSDOM } from "jsdom";
 let renderer = "happy-dom";
-function getLibrary() {
-    return new Promise((resolve) => setRendererInternal(renderer).then(() => import("hydro-js").then(resolve)));
+function getLibrary(options) {
+    return new Promise((resolve) => setRendererInternal(renderer, options ?? renderer === "happy-dom" ? {} : []).then(() => import("hydro-js").then(resolve)));
 }
-async function setRendererInternal(engine = renderer, options = []) {
+async function setRendererInternal(engine = renderer, options) {
     let window;
     if (engine === "happy-dom") {
-        window = new Window(...options);
+        window = new Window(options);
         window.document.write("");
         await window.happyDOM.waitUntilComplete();
     }
     else if (engine === "jsdom") {
-        window = new JSDOM(...options).window;
+        window = new JSDOM(...options)
+            .window;
     }
     renderer = engine;
     if (!("window" in globalThis)) {
