@@ -31,6 +31,7 @@ import hydroJS from "hydro-js-integrations/astro";
 integrations: [hydroJS()],
 ...
 ```
+Have a look here for an Integration with Astro: https://github.com/Krutsch/astro-hydro-js
 
 ## Fresh
 - TBC, after 2.0 Release
