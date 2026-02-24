@@ -53,15 +53,15 @@
   },
   "homepage": "https://github.com/Krutsch/hydro-js-integrations#readme",
   "devDependencies": {
-    "@types/jsdom": "^27.0.0",
-    "@types/node": "^24.9.1",
-    "astro": "^5.14.8",
+    "@types/jsdom": "^28.0.0",
+    "@types/node": "^25.3.0",
+    "astro": "^5.17.3",
     "typescript": "^5.9.3",
-    "vite": "^7.1.11"
+    "vite": "^7.3.1"
   },
   "dependencies": {
-    "happy-dom": "^20.0.8",
+    "happy-dom": "^20.7.0",
     "hydro-js": "^1.8.14",
-    "jsdom": "^27.0.1"
+    "jsdom": "^28.1.0"
   }
 }
