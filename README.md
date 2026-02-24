@@ -48,7 +48,7 @@ import { renderRootToString } from "hydro-js-integrations/server";
 
 
 const app = new Hono();
-app.use("*", serveStatic({ root: "/build" })); // Optional: where the static files are
+
 app.get("/", (c) => {
   const stream = renderToReadableStream(
    ("<!DOCTYPE html>" + renderRootToString()) as HtmlEscapedString
@@ -61,6 +61,7 @@ app.get("/", (c) => {
     },
   });
 });
+app.use("*", serveStatic({ root: "/build" })); // Optional: where the static files are
 
 Deno.serve({ port: 3000 }, app.fetch);
 ```
