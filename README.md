@@ -84,5 +84,87 @@ try {
 }
 ```
 
+## Next.js
+Add `happy-dom` and `jsdom` to `serverExternalPackages` in your Next.js config so they stay server-only:
+> next.config.ts
+```js
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  serverExternalPackages: ["happy-dom", "jsdom"],
+};
+
+export default nextConfig;
+```
+
+Create a component factory – a plain function that receives hydro-js and returns a DOM Element:
+> components/counter.ts
+```js
+export function createCounter({ html, reactive }: typeof import("hydro-js")) {
+  const count = reactive(0);
+
+  return html`
+    <div>
+      <button onclick=${() => count((val) => val + 1)}>
+        count is ${count}
+      </button>
+    </div>
+  `;
+}
+```
+
+Create a generic `"use client"` island wrapper that hydrates any component on the client:
+> components/HydroIsland.tsx
+```jsx
+"use client";
+
+import { useRef, useEffect } from "react";
+
+export default function HydroIsland({ ssrHtml, component }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    async function hydrate() {
+      const hydro = await import("hydro-js");
+      const factory = (await import(`./${component}`))[
+        `create${component[0].toUpperCase() + component.slice(1)}`
+      ];
+
+      if (!ref.current) return;
+
+      ref.current.innerHTML = "";
+      hydro.render(factory(hydro), ref.current);
+    }
+    hydrate();
+  }, [component]);
+
+  return <div ref={ref} dangerouslySetInnerHTML={{ __html: ssrHtml }} />;
+}
+```
+
+Use it in a Server Component – SSR happens via `getLibrary()` + `renderToString()`:
+> app/page.tsx
+```jsx
+import HydroIsland from "@/components/HydroIsland";
+import { getLibrary, renderToString } from "hydro-js-integrations/server";
+import { createCounter } from "@/components/counter";
+
+function ssrRender(html, node) {
+  return renderToString(html`<div>${node}</div>`);
+}
+
+export default async function Home() {
+  const hydro = await getLibrary();
+
+  return (
+    <HydroIsland
+      component="counter"
+      ssrHtml={ssrRender(hydro.html, createCounter(hydro))}
+    />
+  );
+}
+```
+Have a look here for an Integration with Next.js: https://github.com/Krutsch/next-ssr-hydrojs
+
 ## Roadmap
-- add Fresh and Next.js
+- add Fresh
