@@ -1,3 +1,4 @@
+import { version } from "vite";
 import type { getRenderer } from "./server";
 
 const JSX_TOKEN = "/*Add JSX*/";
@@ -9,13 +10,24 @@ export default function hydroJS({
   return {
     name: "hydro-js-plugin",
     config() {
-      return {
-        esbuild: {
-          jsxFactory: "h",
-          jsxFragment: "h",
-          jsxInject: JSX_TOKEN,
-        },
-      };
+      return Number(version.split(".")[0]) >= 8
+        ? {
+            oxc: {
+              jsx: {
+                runtime: "classic" as const,
+                pragma: "h",
+                pragmaFrag: "h",
+              },
+              jsxInject: JSX_TOKEN,
+            },
+          }
+        : {
+            esbuild: {
+              jsxFactory: "h",
+              jsxFragment: "h",
+              jsxInject: JSX_TOKEN,
+            },
+          };
     },
     transform(code: string, _id: string, options?: { ssr?: boolean }) {
       if (code.startsWith(JSX_TOKEN_SEMICOLON)) {
@@ -30,20 +42,20 @@ export default function hydroJS({
               /}\s*from\s*["']hydro-js-integrations\/server["']/,
               `${
                 renderer ? ", setRenderer" : ""
-              } } from "hydro-js-integrations/server";${hImport}`
+              } } from "hydro-js-integrations/server";${hImport}`,
             );
           } else {
             code = code.replace(
               JSX_TOKEN_SEMICOLON,
               `import { getLibrary${
                 renderer ? ", setRenderer" : ""
-              } } from "hydro-js-integrations/server";${hImport}`
+              } } from "hydro-js-integrations/server";${hImport}`,
             );
           }
         } else {
           code = code.replace(
             JSX_TOKEN_SEMICOLON,
-            'import { h } from "hydro-js";\n'
+            'import { h } from "hydro-js";\n',
           );
         }
 

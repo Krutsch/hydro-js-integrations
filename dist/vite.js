@@ -1,16 +1,28 @@
+import { version } from "vite";
 const JSX_TOKEN = "/*Add JSX*/";
 const JSX_TOKEN_SEMICOLON = `${JSX_TOKEN};`;
 export default function hydroJS({ renderer, } = {}) {
     return {
         name: "hydro-js-plugin",
         config() {
-            return {
-                esbuild: {
-                    jsxFactory: "h",
-                    jsxFragment: "h",
-                    jsxInject: JSX_TOKEN,
-                },
-            };
+            return Number(version.split(".")[0]) >= 8
+                ? {
+                    oxc: {
+                        jsx: {
+                            runtime: "classic",
+                            pragma: "h",
+                            pragmaFrag: "h",
+                        },
+                        jsxInject: JSX_TOKEN,
+                    },
+                }
+                : {
+                    esbuild: {
+                        jsxFactory: "h",
+                        jsxFragment: "h",
+                        jsxInject: JSX_TOKEN,
+                    },
+                };
         },
         transform(code, _id, options) {
             if (code.startsWith(JSX_TOKEN_SEMICOLON)) {
