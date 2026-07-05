@@ -1,4 +1,4 @@
-import { renderToString, getLibrary } from "../server";
+import { renderToString, getLibrary } from "../server.js";
 const { setGlobalSchedule, html, render } = await getLibrary();
 setGlobalSchedule(false);
 async function check(Component) {
@@ -24,7 +24,7 @@ async function renderToStaticMarkup(Component, props, { default: children, ...sl
         })
         : html `<${Component} ${props}>${children ? String(children) : ""}</${Component}>`;
     if (isTextNode(node)) {
-        const fragment = new DocumentFragment();
+        const fragment = document.createDocumentFragment();
         fragment.append(node);
         node = fragment;
     }

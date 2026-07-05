@@ -1,10 +1,10 @@
 import { Window } from "happy-dom";
 import { JSDOM } from "jsdom";
-declare let renderer: "happy-dom" | "jsdom";
+type Renderer = "happy-dom" | "jsdom";
 declare function getLibrary(options?: options): Promise<typeof import("hydro-js")>;
-declare function renderRootToString(): any;
-declare function renderToString(elem: Element): any;
-declare function setRenderer(newRenderer: typeof renderer): void;
-declare function getRenderer(): "happy-dom" | "jsdom";
+declare function renderRootToString(): string;
+declare function renderToString(elem: Element): string;
+declare function setRenderer(newRenderer: Renderer): void;
+declare function getRenderer(): Renderer;
 export { renderRootToString, renderToString, setRenderer, getRenderer, getLibrary, };
 type options = ConstructorParameters<typeof Window>[0] | ConstructorParameters<typeof JSDOM>;

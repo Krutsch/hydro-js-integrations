@@ -1,57 +1,79 @@
 import { Window } from "happy-dom";
 import { JSDOM } from "jsdom";
 
-let renderer: "happy-dom" | "jsdom" = "happy-dom";
+type Renderer = "happy-dom" | "jsdom";
 
-function getLibrary(options?: options): Promise<typeof import("hydro-js")> {
-  return new Promise((resolve) =>
-    setRendererInternal(
-      renderer,
-      options ?? renderer === "happy-dom" ? {} : []
-    ).then(() => import("hydro-js").then(resolve))
-  );
+let renderer: Renderer = "happy-dom";
+let activeRenderer: Renderer | undefined;
+
+async function getLibrary(
+  options?: options,
+): Promise<typeof import("hydro-js")> {
+  await setRendererInternal(renderer, options);
+  return import("hydro-js");
 }
-async function setRendererInternal(
-  engine = renderer,
-  options: options | {} | []
-) {
+async function setRendererInternal(engine = renderer, options?: options) {
+  if (
+    activeRenderer === engine &&
+    options === undefined &&
+    "window" in globalThis &&
+    "document" in globalThis
+  ) {
+    return;
+  }
+
+  const rendererOptions = options ?? (engine === "happy-dom" ? {} : []);
   let window;
-  type a = ConstructorParameters<typeof JSDOM>;
   if (engine === "happy-dom") {
-    window = new Window(options as ConstructorParameters<typeof Window>[0]);
+    window = new Window(
+      rendererOptions as ConstructorParameters<typeof Window>[0],
+    );
     window.document.write("");
     await window.happyDOM.waitUntilComplete();
   } else if (engine === "jsdom") {
-    window = new JSDOM(...(options as ConstructorParameters<typeof JSDOM>))
-      .window;
+    window = new JSDOM(
+      ...(rendererOptions as ConstructorParameters<typeof JSDOM>),
+    ).window;
   }
+
+  if (!window) throw new Error(`Unsupported renderer: ${engine}`);
 
   renderer = engine;
+  activeRenderer = engine;
 
-  if (!("window" in globalThis)) {
-    // @ts-expect-error
-    globalThis.window = window;
-    // @ts-expect-error
-    globalThis.document = window.document;
-  }
+  Object.assign(globalThis, {
+    window,
+    document: window.document,
+  });
 }
 
 function renderRootToString() {
   return (
     document.documentElement.getHTML?.({
       serializableShadowRoots: true,
-    }) ?? new window.XMLSerializer().serializeToString(document)
+    }) ?? serializeChildren(document.documentElement)
   );
 }
 function renderToString(elem: Element) {
   return (
     elem.getHTML?.({
       serializableShadowRoots: true,
-    }) ?? new window.XMLSerializer().serializeToString(elem)
+    }) ?? serializeChildren(elem)
   );
 }
 
-function setRenderer(newRenderer: typeof renderer) {
+function serializeChildren(node: ParentNode) {
+  return Array.from(node.childNodes, serializeNode).join("");
+}
+
+function serializeNode(node: ChildNode) {
+  if (node instanceof window.Element) return node.outerHTML;
+  if (node instanceof window.Text) return node.textContent ?? "";
+  if (node instanceof window.Comment) return `<!--${node.textContent ?? ""}-->`;
+  return new window.XMLSerializer().serializeToString(node);
+}
+
+function setRenderer(newRenderer: Renderer) {
   renderer = newRenderer;
 }
 function getRenderer() {

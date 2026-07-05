@@ -1,6 +1,19 @@
 import { version } from "vite";
 const JSX_TOKEN = "/*Add JSX*/";
 const JSX_TOKEN_SEMICOLON = `${JSX_TOKEN};`;
+const SERVER_IMPORT = /import\s*\{([^}]*)\}\s*from\s*["']hydro-js-integrations\/server["'];?/;
+function addNamedImports(currentImports, requiredImports) {
+    const imports = currentImports
+        .split(",")
+        .map((name) => name.trim())
+        .filter(Boolean);
+    for (const requiredImport of requiredImports) {
+        const hasImport = imports.some((name) => name.split(/\s+as\s+/)[0].trim() === requiredImport);
+        if (!hasImport)
+            imports.push(requiredImport);
+    }
+    return imports.join(", ");
+}
 export default function hydroJS({ renderer, } = {}) {
     return {
         name: "hydro-js-plugin",
@@ -25,12 +38,18 @@ export default function hydroJS({ renderer, } = {}) {
                 };
         },
         transform(code, _id, options) {
-            if (code.startsWith(JSX_TOKEN_SEMICOLON)) {
+            if (code.includes(JSX_TOKEN_SEMICOLON)) {
                 if (options?.ssr) {
-                    const hImport = `\n${renderer ? `setRenderer("${renderer}")` : ""};const { h } = await getLibrary();\n`;
-                    if (code.includes("hydro-js-integrations/server")) {
+                    const hImport = `\n${renderer ? `setRenderer("${renderer}");` : ""}const { h } = await getLibrary();\n`;
+                    if (SERVER_IMPORT.test(code)) {
                         code = code.replace(JSX_TOKEN_SEMICOLON, "");
-                        code = code.replace(/}\s*from\s*["']hydro-js-integrations\/server["']/, `${renderer ? ", setRenderer" : ""} } from "hydro-js-integrations/server";${hImport}`);
+                        code = code.replace(SERVER_IMPORT, (_match, currentImports) => {
+                            const imports = addNamedImports(currentImports, [
+                                "getLibrary",
+                                ...(renderer ? ["setRenderer"] : []),
+                            ]);
+                            return `import { ${imports} } from "hydro-js-integrations/server";${hImport}`;
+                        });
                     }
                     else {
                         code = code.replace(JSX_TOKEN_SEMICOLON, `import { getLibrary${renderer ? ", setRenderer" : ""} } from "hydro-js-integrations/server";${hImport}`);

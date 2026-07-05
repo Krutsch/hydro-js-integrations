@@ -2,7 +2,7 @@ import type {
   AstroComponentMetadata,
   NamedSSRLoadedRendererValue,
 } from "astro";
-import { renderToString, getLibrary } from "../server";
+import { renderToString, getLibrary } from "../server.js";
 const { setGlobalSchedule, html, render } = await getLibrary();
 setGlobalSchedule(false);
 
@@ -21,7 +21,7 @@ async function renderToStaticMarkup(
   Component: any,
   props: Record<string, any>,
   { default: children, ...slotted }: Record<string, any>,
-  metadata?: AstroComponentMetadata
+  metadata?: AstroComponentMetadata,
 ) {
   const needsHydrate = metadata?.astroStaticSlot ? !!metadata.hydrate : true;
   const tagName = needsHydrate ? "astro-slot" : "astro-static-slot";
@@ -30,7 +30,7 @@ async function renderToStaticMarkup(
   for (const [key, value] of Object.entries(slotted)) {
     const name = slotName(key);
     slots.push(
-      html`<${tagName} name="${name}">${value}</${tagName}>` as HTMLSlotElement
+      html`<${tagName} name="${name}">${value}</${tagName}>` as HTMLSlotElement,
     );
   }
 
@@ -44,7 +44,7 @@ async function renderToStaticMarkup(
           children ? String(children) : ""
         }</${Component}>`;
   if (isTextNode(node)) {
-    const fragment = new DocumentFragment();
+    const fragment = document.createDocumentFragment();
     fragment.append(node);
     node = fragment;
   }

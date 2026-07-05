@@ -1,13 +1,29 @@
-# Integrations Documention
+# Integrations Documentation
 
-## Getting started  
+## Getting started
+
 ```sh
 npm i hydro-js-integrations
 ```
 
+This package exposes three integration entry points:
+
+- `hydro-js-integrations/server` for server-side DOM setup and serialization.
+- `hydro-js-integrations/vite` for JSX transform setup in Vite.
+- `hydro-js-integrations/astro` for Astro renderer registration.
+
+## Development
+
+```sh
+npm run test:ci
+npm run typecheck
+npm run build
+```
 
 ## Vite
+
 > vite.config.ts
+
 ```js
 import hydroJS from "hydro-js-integrations/vite";
 
@@ -15,15 +31,29 @@ import hydroJS from "hydro-js-integrations/vite";
   plugins: [hydroJS()],
 ...
 ```
+
+The Vite integration also accepts a server renderer option:
+
+```js
+plugins: [hydroJS({ renderer: "jsdom" })];
+```
+
+The default renderer is `happy-dom`.
+
 Have a look here for an Integration with Vite: https://github.com/Krutsch/vite-ssr-hydrojs
 
 ## Astro
+
 Either start a new project like:
+
 ```sh
 npm create astro@latest -- --template krutsch/astro-hydro-js
 ```
+
 or add the changes to the config:
+
 > astro.config.ts
+
 ```js
 import hydroJS from "hydro-js-integrations/astro";
 
@@ -31,13 +61,39 @@ import hydroJS from "hydro-js-integrations/astro";
 integrations: [hydroJS()],
 ...
 ```
+
+You can pass the same renderer option through the Astro integration:
+
+```js
+integrations: [hydroJS({ renderer: "jsdom" })];
+```
+
 Have a look here for an Integration with Astro: https://github.com/Krutsch/astro-hydro-js
 
 ## Server (Deno + Hono example)
-- In general is being done via happy-dom preferably or jsdom alternately. Have a look at the src/server.ts file.
+
+- Server rendering uses `happy-dom` by default, or `jsdom` when configured.
+- `getLibrary()` initializes the DOM and imports `hydro-js`. Repeated calls reuse the current DOM, so split SSR chunks can call it safely.
+- Pass renderer options to `getLibrary(options)` when you need to create a fresh DOM with custom options.
+- `renderRootToString()` serializes the document's `<head>` and `<body>` content.
+- `renderToString(element)` serializes an element's child HTML. Wrap content in a container when you need a specific root element in the output.
+
+### Renderer options
+
+```js
+import { setRenderer, getLibrary } from "hydro-js-integrations/server";
+
+setRenderer("jsdom");
+const { html, render } = await getLibrary([
+  "<!doctype html><html><head></head><body></body></html>",
+  { url: "https://example.test/" },
+]);
+```
 
 ### Example
+
 > Server file
+
 ```js
 import type { HtmlEscapedString } from "hono/utils/html";
 import { Hono } from "hono";
@@ -61,15 +117,17 @@ app.get("/", (c) => {
     },
   });
 });
-app.use("*", serveStatic({ root: "/build" })); // Optional: where the static files are
+app.use("*", serveStatic({ root: "./build" })); // Optional: where the static files are
 
 Deno.serve({ port: 3000 }, app.fetch);
 ```
+
 <br>
 
 > ssr.ts
+
 ```js
-import { renderRootToString, getLibrary } from "hydro-js-integrations/server";
+import { getLibrary } from "hydro-js-integrations/server";
 const { render, html } = await getLibrary();
 
 try {
@@ -83,8 +141,11 @@ try {
 ```
 
 ## Next.js
+
 Add `happy-dom` and `jsdom` to `serverExternalPackages` in your Next.js config so they stay server-only:
+
 > next.config.ts
+
 ```js
 import type { NextConfig } from "next";
 
@@ -96,9 +157,11 @@ export default nextConfig;
 ```
 
 Create a component – a plain function that receives hydro-js and returns a DOM Element:
+
 > components/counter.ts
+
 ```js
-export default function Counter({ html, reactive }: typeof import("hydro-js")) {
+export function createCounter({ html, reactive }: typeof import("hydro-js")) {
   const count = reactive(0);
 
   return html`
@@ -112,7 +175,9 @@ export default function Counter({ html, reactive }: typeof import("hydro-js")) {
 ```
 
 Create a generic `"use client"` island wrapper that hydrates any component on the client:
+
 > components/HydroIsland.tsx
+
 ```jsx
 "use client";
 
@@ -141,11 +206,13 @@ export default function HydroIsland({ ssrHtml, component }) {
 ```
 
 Use it in a Server Component – SSR happens via `getLibrary()` + `renderToString()`:
+
 > app/page.tsx
+
 ```jsx
 import HydroIsland from "@/components/HydroIsland";
 import { getLibrary, renderToString } from "hydro-js-integrations/server";
-import { Counter } from "@/components/counter";
+import { createCounter } from "@/components/counter";
 
 function ssrRender(html, node) {
   return renderToString(html`<div>${node}</div>`);
@@ -157,24 +224,29 @@ export default async function Home() {
   return (
     <HydroIsland
       component="counter"
-      ssrHtml={ssrRender(hydro.html, Counter(hydro))}
+      ssrHtml={ssrRender(hydro.html, createCounter(hydro))}
     />
   );
 }
 ```
+
 Have a look here for an Integration with Next.js: https://github.com/Krutsch/next-ssr-hydrojs
 
 ## Fresh
+
 Fresh 2.x uses Preact as its renderer, so hydro-js components live inside Preact islands.
 
 Add `hydro-js` and `happy-dom` to your `deno.json` imports and externalize them for SSR:
+
 > deno.json (imports excerpt)
+
 ```json
-"hydro-js": "npm:hydro-js@^1.8.14",
-"happy-dom": "npm:happy-dom@^20.7.0"
+"hydro-js": "npm:hydro-js@^1.9.0",
+"happy-dom": "npm:happy-dom@^20.10.6"
 ```
 
 > vite.config.ts
+
 ```js
 import { defineConfig } from "vite";
 import { fresh } from "@fresh/plugin-vite";
@@ -188,7 +260,9 @@ export default defineConfig({
 ```
 
 Create a small SSR helper that initializes happy-dom and re-exports hydro-js:
+
 > utils/hydro-ssr.ts
+
 ```js
 import { Window } from "happy-dom";
 
@@ -209,7 +283,9 @@ export { hydro };
 ```
 
 Create a component (same pattern as the other integrations):
+
 > components/counter.ts
+
 ```js
 export default function Counter(html, reactive) {
   const count = reactive(0);
@@ -225,7 +301,9 @@ export default function Counter(html, reactive) {
 ```
 
 Create a generic Preact island wrapper that hydrates any hydro-js component on the client:
+
 > islands/HydroIsland.tsx
+
 ```jsx
 import { useEffect, useRef } from "preact/hooks";
 
@@ -251,27 +329,28 @@ export default function HydroIsland({ component, ssrHtml }) {
     hydrate();
   }, [component]);
 
-  return ssrHtml
-    ? <div ref={ref} dangerouslySetInnerHTML={{ __html: ssrHtml }} />
-    : <div ref={ref}>Loading...</div>;
+  return ssrHtml ? (
+    <div ref={ref} dangerouslySetInnerHTML={{ __html: ssrHtml }} />
+  ) : (
+    <div ref={ref}>Loading...</div>
+  );
 }
 ```
 
 Use it in a route – SSR happens at module level via the helper:
+
 > routes/index.tsx
+
 ```jsx
 import HydroIsland from "../islands/HydroIsland.tsx";
 import { hydro, renderToString } from "../utils/hydro-ssr.ts";
 import Counter from "../components/counter.ts";
 
-const counterHtml = renderToString(
-  Counter(hydro.html, hydro.reactive),
-);
+const counterHtml = renderToString(Counter(hydro.html, hydro.reactive));
 
 export default function Home() {
-  return (
-    <HydroIsland component="counter" ssrHtml={counterHtml} />
-  );
+  return <HydroIsland component="counter" ssrHtml={counterHtml} />;
 }
 ```
+
 Have a look here for an Integration with Fresh: https://github.com/Krutsch/fresh-ssr-hydrojs

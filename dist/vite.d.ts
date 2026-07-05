@@ -1,4 +1,4 @@
-import type { getRenderer } from "./server";
+import type { getRenderer } from "./server.js";
 export default function hydroJS({ renderer, }?: {
     renderer?: ReturnType<typeof getRenderer>;
 }): {
