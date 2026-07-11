@@ -6,13 +6,7 @@ export default (element) => async (Component, props, { default: children, ...slo
         return;
     const slots = [];
     for (const [key, value] of Object.entries(slotted)) {
-        let elem;
-        if (key === "default") {
-            elem = html `<astro-slot>${value}</astro-slot>`;
-        }
-        else {
-            elem = html `<astro-slot name="${key}">${value}</astro-slot>`;
-        }
+        const elem = html `<astro-slot name="${key}">${value}</astro-slot>`;
         slots.push(elem);
     }
     const place = elementMap.get(element);

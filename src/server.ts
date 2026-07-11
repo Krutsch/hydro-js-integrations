@@ -1,18 +1,24 @@
 import { Window } from "happy-dom";
 import { JSDOM } from "jsdom";
 
-type Renderer = "happy-dom" | "jsdom";
+export type Renderer = "happy-dom" | "jsdom";
+export type RendererOptions =
+  | ConstructorParameters<typeof Window>[0]
+  | ConstructorParameters<typeof JSDOM>;
 
 let renderer: Renderer = "happy-dom";
 let activeRenderer: Renderer | undefined;
 
 async function getLibrary(
-  options?: options,
+  options?: RendererOptions,
 ): Promise<typeof import("hydro-js")> {
   await setRendererInternal(renderer, options);
   return import("hydro-js");
 }
-async function setRendererInternal(engine = renderer, options?: options) {
+async function setRendererInternal(
+  engine: Renderer = renderer,
+  options?: RendererOptions,
+) {
   if (
     activeRenderer === engine &&
     options === undefined &&
@@ -68,8 +74,6 @@ function serializeChildren(node: ParentNode) {
 
 function serializeNode(node: ChildNode) {
   if (node instanceof window.Element) return node.outerHTML;
-  if (node instanceof window.Text) return node.textContent ?? "";
-  if (node instanceof window.Comment) return `<!--${node.textContent ?? ""}-->`;
   return new window.XMLSerializer().serializeToString(node);
 }
 
@@ -87,7 +91,3 @@ export {
   getRenderer,
   getLibrary,
 };
-
-type options =
-  | ConstructorParameters<typeof Window>[0]
-  | ConstructorParameters<typeof JSDOM>;

@@ -76,4 +76,15 @@ describe("server integration", () => {
       '<head><title>JSDOM</title></head><body><main id="app">SSR</main></body>',
     );
   });
+
+  it("escapes text when serializing with jsdom", async () => {
+    const server = await loadServer();
+    server.setRenderer("jsdom");
+    await server.getLibrary();
+
+    const node = document.createElement("p");
+    node.append(document.createTextNode("<script>&"));
+
+    expect(server.renderToString(node)).toBe("&lt;script&gt;&amp;");
+  });
 });

@@ -125,6 +125,25 @@ describe("Astro client hydrator", () => {
     );
   });
 
+  it("preserves named slot keys during hydration", async () => {
+    const createHydrator = await loadHydrator();
+    const host = createHost();
+    host.setAttribute("ssr", "");
+
+    await createHydrator(host)(
+      createComponent("Client"),
+      {},
+      {
+        side_bar: "Side",
+      },
+    );
+
+    expect(host.querySelector('astro-slot[name="side_bar"]')?.textContent).toBe(
+      "Side",
+    );
+    expect(host.querySelector('astro-slot[name="sideBar"]')).toBeNull();
+  });
+
   it("reuses the previous render target on repeated hydration", async () => {
     const createHydrator = await loadHydrator();
     const host = createHost();

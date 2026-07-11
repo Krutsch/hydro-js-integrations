@@ -1,10 +1,10 @@
-import type { getRenderer } from "../server.js";
+import type { Renderer } from "../server.js";
 import hydroJSVite from "../vite.js";
 import type { AstroIntegration } from "astro";
 
 export default function hydroJS({
   renderer,
-}: { renderer?: ReturnType<typeof getRenderer> } = {}): AstroIntegration {
+}: { renderer?: Renderer } = {}): AstroIntegration {
   return {
     name: "astro-hydro-js",
     hooks: {
@@ -27,11 +27,11 @@ export default function hydroJS({
           "@astrojs/solid-js",
         ];
         const enabledKnownJsxRenderers = config.integrations.filter(
-          (renderer) => knownJsxRenderers.includes(renderer.name)
+          (renderer) => knownJsxRenderers.includes(renderer.name),
         );
         if (enabledKnownJsxRenderers.length > 1) {
           logger.warn(
-            "More than one JSX renderer is enabled. This will lead to unexpected behavior for now."
+            "More than one JSX renderer is enabled. This will lead to unexpected behavior for now.",
           );
         }
       },

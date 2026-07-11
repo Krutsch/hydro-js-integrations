@@ -1,10 +1,10 @@
 import { version } from "vite";
-import type { getRenderer } from "./server.js";
+import type { Renderer } from "./server.js";
 
 const JSX_TOKEN = "/*Add JSX*/";
 const JSX_TOKEN_SEMICOLON = `${JSX_TOKEN};`;
 const SERVER_IMPORT =
-  /import\s*\{([^}]*)\}\s*from\s*["']hydro-js-integrations\/server["'];?/;
+  /import\s*\{([^}]*)\}\s*from\s*["']hydro-js-integrations\/server["'];?/g;
 
 function addNamedImports(currentImports: string, requiredImports: string[]) {
   const imports = currentImports
@@ -14,7 +14,11 @@ function addNamedImports(currentImports: string, requiredImports: string[]) {
 
   for (const requiredImport of requiredImports) {
     const hasImport = imports.some(
-      (name) => name.split(/\s+as\s+/)[0].trim() === requiredImport,
+      (name) =>
+        name
+          .split(/\s+as\s+/)
+          .at(-1)
+          ?.trim() === requiredImport,
     );
     if (!hasImport) imports.push(requiredImport);
   }
@@ -22,9 +26,7 @@ function addNamedImports(currentImports: string, requiredImports: string[]) {
   return imports.join(", ");
 }
 
-export default function hydroJS({
-  renderer,
-}: { renderer?: ReturnType<typeof getRenderer> } = {}) {
+export default function hydroJS({ renderer }: { renderer?: Renderer } = {}) {
   return {
     name: "hydro-js-plugin",
     config() {
@@ -51,16 +53,20 @@ export default function hydroJS({
       if (code.includes(JSX_TOKEN_SEMICOLON)) {
         if (options?.ssr) {
           const hImport = `\n${
-            renderer ? `setRenderer("${renderer}");` : ""
+            renderer ? `setRenderer(${JSON.stringify(renderer)});` : ""
           }const { h } = await getLibrary();\n`;
 
-          if (SERVER_IMPORT.test(code)) {
+          const serverImports = Array.from(code.matchAll(SERVER_IMPORT));
+          if (serverImports.length > 0) {
             code = code.replace(JSX_TOKEN_SEMICOLON, "");
-            code = code.replace(SERVER_IMPORT, (_match, currentImports) => {
-              const imports = addNamedImports(currentImports, [
-                "getLibrary",
-                ...(renderer ? ["setRenderer"] : []),
-              ]);
+            const imports = addNamedImports(
+              serverImports.map((match) => match[1]).join(","),
+              ["getLibrary", ...(renderer ? ["setRenderer"] : [])],
+            );
+            let replacedImport = false;
+            code = code.replace(SERVER_IMPORT, () => {
+              if (replacedImport) return "";
+              replacedImport = true;
               return `import { ${imports} } from "hydro-js-integrations/server";${hImport}`;
             });
           } else {

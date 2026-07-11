@@ -7,13 +7,11 @@ const { setGlobalSchedule, html, render } = await getLibrary();
 setGlobalSchedule(false);
 
 async function check(Component: any) {
-  const inside = Component.toString();
-  return (
-    typeof Component === "string" ||
-    (typeof Component === "function" &&
-      (inside.includes("h") ||
-        inside.includes("html`") ||
-        inside.includes("html$")))
+  if (typeof Component === "string") return true;
+  if (typeof Component !== "function") return false;
+
+  return /\b(?:h\s*\(|html\s*`|html\$)/.test(
+    Function.prototype.toString.call(Component),
   );
 }
 
@@ -28,9 +26,8 @@ async function renderToStaticMarkup(
 
   const slots: HTMLSlotElement[] = [];
   for (const [key, value] of Object.entries(slotted)) {
-    const name = slotName(key);
     slots.push(
-      html`<${tagName} name="${name}">${value}</${tagName}>` as HTMLSlotElement,
+      html`<${tagName} name="${key}">${value}</${tagName}>` as HTMLSlotElement,
     );
   }
 
@@ -53,13 +50,11 @@ async function renderToStaticMarkup(
   const wrapper = html`<div>${node}</div>` as HTMLDivElement;
   const unmount = render(wrapper);
 
-  const nodeHTML = renderToString(wrapper);
-  unmount();
-  return { html: nodeHTML };
-}
-
-function slotName(str: string) {
-  return str.trim().replace(/[-_]([a-z])/g, (_, w) => w.toUpperCase());
+  try {
+    return { html: renderToString(wrapper) };
+  } finally {
+    unmount();
+  }
 }
 
 function isTextNode(node: Node): node is Text {
@@ -70,7 +65,7 @@ const renderer: NamedSSRLoadedRendererValue = {
   name: "hydro-js",
   check,
   renderToStaticMarkup,
-  supportsAstroStaticSlot: false,
+  supportsAstroStaticSlot: true,
 };
 
 export default renderer;

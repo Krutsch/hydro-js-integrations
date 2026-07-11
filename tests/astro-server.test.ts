@@ -27,9 +27,16 @@ describe("Astro server renderer", () => {
       return "plain";
     }
 
+    function OtherComponent() {
+      return document.createElement("div");
+    }
+
     expect(await renderer.check("article")).toBe(true);
     expect(await renderer.check(HydroComponent)).toBe(true);
     expect(await renderer.check(PlainComponent)).toBe(false);
+    expect(await renderer.check(OtherComponent)).toBe(false);
+    expect(await renderer.check(null)).toBe(false);
+    expect(await renderer.check({})).toBe(false);
   });
 
   it("renders function components with children and named slots", async () => {
@@ -50,7 +57,7 @@ describe("Astro server renderer", () => {
     );
 
     expect(result.html).toBe(
-      '<section data-title="Card">Hello<astro-slot name="sideBar"><span>Side</span></astro-slot></section>',
+      '<section data-title="Card">Hello<astro-slot name="side_bar"><span>Side</span></astro-slot></section>',
     );
   });
 
@@ -68,6 +75,8 @@ describe("Astro server renderer", () => {
 
   it("uses Astro static slot tags when metadata allows static slots", async () => {
     const renderer = await loadRenderer();
+
+    expect(renderer.supportsAstroStaticSlot).toBe(true);
 
     const result = await renderer.renderToStaticMarkup(
       () => document.createElement("aside"),

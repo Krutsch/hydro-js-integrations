@@ -48,10 +48,6 @@ function serializeChildren(node) {
 function serializeNode(node) {
     if (node instanceof window.Element)
         return node.outerHTML;
-    if (node instanceof window.Text)
-        return node.textContent ?? "";
-    if (node instanceof window.Comment)
-        return `<!--${node.textContent ?? ""}-->`;
     return new window.XMLSerializer().serializeToString(node);
 }
 function setRenderer(newRenderer) {

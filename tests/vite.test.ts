@@ -95,6 +95,34 @@ describe("vite integration", () => {
     );
   });
 
+  it("adds callable imports when existing server imports use aliases", () => {
+    const output = transform(
+      hydroJS({ renderer: "jsdom" }),
+      `${JSX_TOKEN}\nimport { getLibrary as loadHydro, setRenderer as chooseRenderer } from "hydro-js-integrations/server";\nexport const view = <div />;`,
+      { ssr: true },
+    );
+
+    expect(output).toContain(
+      "getLibrary as loadHydro, setRenderer as chooseRenderer, getLibrary, setRenderer",
+    );
+    expect(output).toContain(
+      'setRenderer("jsdom");const { h } = await getLibrary();',
+    );
+  });
+
+  it("merges multiple existing server integration imports", () => {
+    const output = transform(
+      hydroJS({ renderer: "jsdom" }),
+      `${JSX_TOKEN}\nimport { renderToString } from "hydro-js-integrations/server";\nimport { getLibrary } from "hydro-js-integrations/server";\nexport const view = <div />;`,
+      { ssr: true },
+    );
+
+    expect(output?.match(/from "hydro-js-integrations\/server"/g)).toHaveLength(
+      1,
+    );
+    expect(output).toContain("renderToString, getLibrary, setRenderer");
+  });
+
   it("transforms when another plugin prepends code before the JSX token", () => {
     const output = transform(
       hydroJS(),

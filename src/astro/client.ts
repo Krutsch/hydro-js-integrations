@@ -7,18 +7,13 @@ export default (element: HTMLElement) =>
   async (
     Component: any,
     props: Record<string, any>,
-    { default: children, ...slotted }: Record<string, any>
+    { default: children, ...slotted }: Record<string, any>,
   ) => {
     if (!element.hasAttribute("ssr")) return;
 
     const slots: HTMLSlotElement[] = [];
     for (const [key, value] of Object.entries(slotted)) {
-      let elem;
-      if (key === "default") {
-        elem = html`<astro-slot>${value}</astro-slot>`;
-      } else {
-        elem = html`<astro-slot name="${key}">${value}</astro-slot>`;
-      }
+      const elem = html`<astro-slot name="${key}">${value}</astro-slot>`;
       slots.push(elem as HTMLSlotElement);
     }
 

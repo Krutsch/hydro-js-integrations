@@ -1,6 +1,6 @@
-import type { getRenderer } from "./server.js";
-export default function hydroJS({ renderer, }?: {
-    renderer?: ReturnType<typeof getRenderer>;
+import type { Renderer } from "./server.js";
+export default function hydroJS({ renderer }?: {
+    renderer?: Renderer;
 }): {
     name: string;
     config(): {
@@ -14,12 +14,12 @@ export default function hydroJS({ renderer, }?: {
         };
         esbuild?: undefined;
     } | {
+        oxc?: undefined;
         esbuild: {
             jsxFactory: string;
             jsxFragment: string;
             jsxInject: string;
         };
-        oxc?: undefined;
     };
     transform(code: string, _id: string, options?: {
         ssr?: boolean;

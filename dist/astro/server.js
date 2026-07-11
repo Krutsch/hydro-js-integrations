@@ -2,20 +2,18 @@ import { renderToString, getLibrary } from "../server.js";
 const { setGlobalSchedule, html, render } = await getLibrary();
 setGlobalSchedule(false);
 async function check(Component) {
-    const inside = Component.toString();
-    return (typeof Component === "string" ||
-        (typeof Component === "function" &&
-            (inside.includes("h") ||
-                inside.includes("html`") ||
-                inside.includes("html$"))));
+    if (typeof Component === "string")
+        return true;
+    if (typeof Component !== "function")
+        return false;
+    return /\b(?:h\s*\(|html\s*`|html\$)/.test(Function.prototype.toString.call(Component));
 }
 async function renderToStaticMarkup(Component, props, { default: children, ...slotted }, metadata) {
     const needsHydrate = metadata?.astroStaticSlot ? !!metadata.hydrate : true;
     const tagName = needsHydrate ? "astro-slot" : "astro-static-slot";
     const slots = [];
     for (const [key, value] of Object.entries(slotted)) {
-        const name = slotName(key);
-        slots.push(html `<${tagName} name="${name}">${value}</${tagName}>`);
+        slots.push(html `<${tagName} name="${key}">${value}</${tagName}>`);
     }
     let node = typeof Component === "function"
         ? Component({
@@ -31,12 +29,12 @@ async function renderToStaticMarkup(Component, props, { default: children, ...sl
     node.append(...slots);
     const wrapper = html `<div>${node}</div>`;
     const unmount = render(wrapper);
-    const nodeHTML = renderToString(wrapper);
-    unmount();
-    return { html: nodeHTML };
-}
-function slotName(str) {
-    return str.trim().replace(/[-_]([a-z])/g, (_, w) => w.toUpperCase());
+    try {
+        return { html: renderToString(wrapper) };
+    }
+    finally {
+        unmount();
+    }
 }
 function isTextNode(node) {
     return node.splitText !== undefined;
@@ -45,6 +43,6 @@ const renderer = {
     name: "hydro-js",
     check,
     renderToStaticMarkup,
-    supportsAstroStaticSlot: false,
+    supportsAstroStaticSlot: true,
 };
 export default renderer;
