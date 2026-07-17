@@ -5,6 +5,7 @@ const JSX_TOKEN = "/*Add JSX*/";
 const JSX_TOKEN_SEMICOLON = `${JSX_TOKEN};`;
 const SERVER_IMPORT =
   /import\s*\{([^}]*)\}\s*from\s*["']hydro-js-integrations\/server["'];?/g;
+const HYDRO_IMPORT = /import\s*\{([^}]*)\}\s*from\s*["']hydro-js["'];?/g;
 
 function addNamedImports(currentImports: string, requiredImports: string[]) {
   const imports = currentImports
@@ -24,6 +25,24 @@ function addNamedImports(currentImports: string, requiredImports: string[]) {
   }
 
   return imports.join(", ");
+}
+
+function getHydroBindings(code: string) {
+  const bindings = new Map([["h", "h"]]);
+  code.replace(HYDRO_IMPORT, (_import, imported: string) => {
+    for (const name of imported.split(",").map((name) => name.trim())) {
+      if (!name) continue;
+      const [original, alias] = name.split(/\s+as\s+/);
+      const importedName = original.trim();
+      const localName = alias?.trim() ?? importedName;
+      bindings.set(
+        localName,
+        alias ? `${importedName}: ${localName}` : importedName,
+      );
+    }
+    return _import;
+  });
+  return Array.from(bindings.values());
 }
 
 export default function hydroJS({ renderer }: { renderer?: Renderer } = {}) {
@@ -52,9 +71,12 @@ export default function hydroJS({ renderer }: { renderer?: Renderer } = {}) {
     transform(code: string, _id: string, options?: { ssr?: boolean }) {
       if (code.includes(JSX_TOKEN_SEMICOLON)) {
         if (options?.ssr) {
+          const hydroBindings = getHydroBindings(code);
           const hImport = `\n${
             renderer ? `setRenderer(${JSON.stringify(renderer)});` : ""
-          }const { h } = await getLibrary();\n`;
+          }const { ${hydroBindings.join(", ")} } = await getLibrary();\n`;
+
+          code = code.replace(HYDRO_IMPORT, "");
 
           const serverImports = Array.from(code.matchAll(SERVER_IMPORT));
           if (serverImports.length > 0) {

@@ -62,6 +62,30 @@ describe("vite integration", () => {
     expect(output).not.toContain(JSX_TOKEN);
   });
 
+  it("loads static hydro-js imports after initializing the SSR DOM", () => {
+    const output = transform(
+      hydroJS(),
+      `${JSX_TOKEN}\nimport { reactive as signal } from "hydro-js";\nexport const view = <div />;`,
+      { ssr: true },
+    );
+
+    expect(output).not.toContain('from "hydro-js"');
+    expect(output).toContain(
+      "const { h, reactive: signal } = await getLibrary();",
+    );
+  });
+
+  it("does not duplicate an explicit h import in SSR output", () => {
+    const output = transform(
+      hydroJS(),
+      `${JSX_TOKEN}\nimport { h, reactive } from "hydro-js";\nexport const view = <div />;`,
+      { ssr: true },
+    );
+
+    expect(output).toContain("const { h, reactive } = await getLibrary();");
+    expect(output).not.toContain("const { h, h,");
+  });
+
   it("sets the configured renderer before SSR imports hydro-js", () => {
     const output = transform(
       hydroJS({ renderer: "jsdom" }),

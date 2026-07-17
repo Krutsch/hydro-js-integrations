@@ -87,4 +87,108 @@ describe("server integration", () => {
 
     expect(server.renderToString(node)).toBe("&lt;script&gt;&amp;");
   });
+
+  it("isolates overlapping server DOM sessions", async () => {
+    const server = await loadServer();
+    let releaseFirst!: () => void;
+    const firstCanFinish = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+    const order: string[] = [];
+
+    const first = server.withServerDOM(
+      {},
+      async ({ document, serializeRoot }) => {
+        order.push("first:start");
+        document.body.innerHTML = '<main id="first">First</main>';
+        await firstCanFinish;
+        order.push("first:end");
+        return serializeRoot();
+      },
+    );
+    const second = server.withServerDOM(
+      {},
+      async ({ document, serializeRoot }) => {
+        order.push("second:start");
+        document.body.innerHTML = '<main id="second">Second</main>';
+        order.push("second:end");
+        return serializeRoot();
+      },
+    );
+
+    await vi.waitFor(() => expect(order).toEqual(["first:start"]));
+    releaseFirst();
+
+    await expect(first).resolves.toContain('<main id="first">First</main>');
+    await expect(second).resolves.toContain('<main id="second">Second</main>');
+    expect(order).toEqual([
+      "first:start",
+      "first:end",
+      "second:start",
+      "second:end",
+    ]);
+    expect("window" in globalThis).toBe(false);
+    expect("document" in globalThis).toBe(false);
+  });
+
+  it("reuses the Hydro-bound DOM while resetting document and state", async () => {
+    const server = await loadServer();
+    let firstWindow: Window;
+
+    await server.withServerDOM({}, ({ window, document, library }) => {
+      firstWindow = window;
+      library.hydro.requestValue = "first";
+      document.body.innerHTML = '<main id="first">First</main>';
+    });
+
+    await server.withServerDOM({}, ({ window, document, library }) => {
+      expect(window).toBe(firstWindow);
+      expect(document.querySelector("#first")).toBeNull();
+      expect(library.hydro.requestValue).toBeUndefined();
+      const node = library.html`<main id="second">Second</main>`;
+      expect(node).toBeInstanceOf(window.HTMLElement);
+    });
+  });
+
+  it("locks renderer configuration after initialization", async () => {
+    const server = await loadServer();
+    await server.withServerDOM({}, () => undefined);
+
+    expect(() => server.setRenderer("jsdom")).toThrow(
+      "Server DOM renderer is locked to happy-dom",
+    );
+    await expect(
+      server.withServerDOM({ renderer: "jsdom" }, () => undefined),
+    ).rejects.toThrow("Server DOM already initialized with happy-dom");
+  });
+
+  it("rejects nested sessions instead of deadlocking", async () => {
+    const server = await loadServer();
+
+    await expect(
+      server.withServerDOM({}, () =>
+        server.withServerDOM({}, () => "nested"),
+      ),
+    ).rejects.toThrow("withServerDOM() cannot be nested");
+  });
+
+  it("restores the previous DOM after a server session fails", async () => {
+    const server = await loadServer();
+    await server.getLibrary();
+    const previousWindow = window;
+    const previousDocument = document;
+    document.body.innerHTML = '<main id="legacy">Legacy</main>';
+
+    await expect(
+      server.withServerDOM({}, async ({ document }) => {
+        document.body.innerHTML = '<main id="temporary">Temporary</main>';
+        throw new Error("render failed");
+      }),
+    ).rejects.toThrow("render failed");
+
+    expect(window).toBe(previousWindow);
+    expect(document).toBe(previousDocument);
+    expect(document.querySelector("#legacy")).toBeNull();
+    expect(document.querySelector("#temporary")).toBeNull();
+  });
 });

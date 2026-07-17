@@ -2,6 +2,7 @@ import { version } from "vite";
 const JSX_TOKEN = "/*Add JSX*/";
 const JSX_TOKEN_SEMICOLON = `${JSX_TOKEN};`;
 const SERVER_IMPORT = /import\s*\{([^}]*)\}\s*from\s*["']hydro-js-integrations\/server["'];?/g;
+const HYDRO_IMPORT = /import\s*\{([^}]*)\}\s*from\s*["']hydro-js["'];?/g;
 function addNamedImports(currentImports, requiredImports) {
     const imports = currentImports
         .split(",")
@@ -16,6 +17,21 @@ function addNamedImports(currentImports, requiredImports) {
             imports.push(requiredImport);
     }
     return imports.join(", ");
+}
+function getHydroBindings(code) {
+    const bindings = new Map([["h", "h"]]);
+    code.replace(HYDRO_IMPORT, (_import, imported) => {
+        for (const name of imported.split(",").map((name) => name.trim())) {
+            if (!name)
+                continue;
+            const [original, alias] = name.split(/\s+as\s+/);
+            const importedName = original.trim();
+            const localName = alias?.trim() ?? importedName;
+            bindings.set(localName, alias ? `${importedName}: ${localName}` : importedName);
+        }
+        return _import;
+    });
+    return Array.from(bindings.values());
 }
 export default function hydroJS({ renderer } = {}) {
     return {
@@ -43,7 +59,9 @@ export default function hydroJS({ renderer } = {}) {
         transform(code, _id, options) {
             if (code.includes(JSX_TOKEN_SEMICOLON)) {
                 if (options?.ssr) {
-                    const hImport = `\n${renderer ? `setRenderer(${JSON.stringify(renderer)});` : ""}const { h } = await getLibrary();\n`;
+                    const hydroBindings = getHydroBindings(code);
+                    const hImport = `\n${renderer ? `setRenderer(${JSON.stringify(renderer)});` : ""}const { ${hydroBindings.join(", ")} } = await getLibrary();\n`;
+                    code = code.replace(HYDRO_IMPORT, "");
                     const serverImports = Array.from(code.matchAll(SERVER_IMPORT));
                     if (serverImports.length > 0) {
                         code = code.replace(JSX_TOKEN_SEMICOLON, "");
