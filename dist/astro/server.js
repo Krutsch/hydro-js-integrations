@@ -1,4 +1,5 @@
 import { withServerDOM } from "../server.js";
+import { adaptComponent } from "./adapt.js";
 async function check(Component) {
     if (typeof Component === "string")
         return true;
@@ -11,22 +12,15 @@ async function renderToStaticMarkup(Component, props, { default: children, ...sl
         const { html, render } = library;
         const needsHydrate = metadata?.astroStaticSlot ? !!metadata.hydrate : true;
         const tagName = needsHydrate ? "astro-slot" : "astro-static-slot";
-        const slots = [];
-        for (const [key, value] of Object.entries(slotted)) {
-            slots.push(html `<${tagName} name="${key}">${value}</${tagName}>`);
-        }
-        let node = typeof Component === "function"
-            ? Component({
-                ...props,
-                ...(children ? { children: html `${String(children)}` } : {}),
-            })
-            : html `<${Component} ${props}>${children ? String(children) : ""}</${Component}>`;
-        if (isTextNode(node)) {
-            const fragment = document.createDocumentFragment();
-            fragment.append(node);
-            node = fragment;
-        }
-        node.append(...slots);
+        const node = adaptComponent({
+            Component,
+            props,
+            children,
+            slotted,
+            document,
+            html,
+            createSlot: (name, value) => html `<${tagName} name="${name}">${value}</${tagName}>`,
+        });
         const wrapper = html `<div>${node}</div>`;
         const unmount = render(wrapper);
         try {

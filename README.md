@@ -76,6 +76,7 @@ Have a look here for an Integration with Astro: https://github.com/Krutsch/astro
 - `getLibrary()` initializes the DOM and imports `hydro-js`. Repeated calls reuse the current DOM, so split SSR chunks can call it safely.
 - Pass renderer options to the first `getLibrary(options)` call. Renderer configuration is locked after Hydro initializes.
 - Use `withServerDOM(options, callback)` for request rendering. It queues overlapping sessions, resets one Hydro-bound DOM between requests, and restores previous globals even when rendering fails.
+- The callback context is the authoritative request interface: use `context.serializeRoot()` and `context.serialize(element)` so serialization stays bound to that session's DOM. Top-level serializers remain compatibility helpers for the active global DOM.
 - `renderRootToString()` serializes the document's `<head>` and `<body>` content.
 - `renderToString(element)` serializes an element's child HTML. Wrap content in a container when you need a specific root element in the output.
 
@@ -96,11 +97,14 @@ const { html, render } = await getLibrary([
 ```js
 import { withServerDOM } from "hydro-js-integrations/server";
 
-const output = await withServerDOM({}, ({ document, library }) => {
-  const { html, render } = library;
-  render(html`<main>Server content</main>`, document.body, false);
-  return document.documentElement.outerHTML;
-});
+const output = await withServerDOM(
+  {},
+  ({ document, library, serializeRoot }) => {
+    const { html, render } = library;
+    render(html`<main>Server content</main>`, document.body, false);
+    return serializeRoot();
+  },
+);
 ```
 
 `window` and `document` are process globals required by hydro-js. The callback queue prevents concurrent requests from replacing those globals while another render is active. Renderer and renderer options are locked after the first Hydro import because hydro-js caches DOM-bound parsers and selectors. Keep network and database work outside the callback when possible.

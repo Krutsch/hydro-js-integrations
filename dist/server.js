@@ -1,6 +1,5 @@
-import { Window } from "happy-dom";
-import { JSDOM } from "jsdom";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { createRenderer } from "./renderer.js";
 let renderer = "happy-dom";
 let activeRenderer;
 let serverDOMQueue = Promise.resolve();
@@ -22,21 +21,11 @@ async function setRendererInternal(engine = renderer, options) {
         });
         return;
     }
-    const rendererOptions = options ?? (engine === "happy-dom" ? {} : []);
-    let window;
-    if (engine === "happy-dom") {
-        window = new Window(rendererOptions);
-        window.document.write("");
-        await window.happyDOM.waitUntilComplete();
-    }
-    else if (engine === "jsdom") {
-        window = new JSDOM(...rendererOptions).window;
-    }
-    if (!window)
-        throw new Error(`Unsupported renderer: ${engine}`);
+    const session = await createRenderer(engine, options);
+    await session.ready;
     renderer = engine;
     activeRenderer = engine;
-    serverWindow = window;
+    serverWindow = session.window;
     Object.assign(globalThis, {
         window: serverWindow,
         document: serverWindow.document,
@@ -57,13 +46,14 @@ function withServerDOM(options, callback) {
             const library = await getLibrary();
             resetServerDOM(library);
             const session = { active: true };
+            const sessionWindow = serverWindow;
             try {
                 return await serverDOMSession.run(session, () => callback({
-                    window: serverWindow,
-                    document: serverWindow.document,
+                    window: sessionWindow,
+                    document: sessionWindow.document,
                     library,
-                    serializeRoot: renderRootToString,
-                    serialize: renderToString,
+                    serializeRoot: () => serializeRootInWindow(sessionWindow),
+                    serialize: (element) => serializeInWindow(element, sessionWindow),
                 }));
             }
             finally {
@@ -103,25 +93,32 @@ function resetServerDOM(library) {
     library.setInsertDiffing(false);
     library.setShouldSetReactivity(true);
     library.setIgnoreIsConnected(false);
-    serverWindow.document.documentElement.innerHTML = "<head></head><body></body>";
+    serverWindow.document.documentElement.innerHTML =
+        "<head></head><body></body>";
 }
-function renderRootToString() {
-    return (document.documentElement.getHTML?.({
+function serializeRootInWindow(serverWindow) {
+    return (serverWindow.document.documentElement.getHTML?.({
         serializableShadowRoots: true,
-    }) ?? serializeChildren(document.documentElement));
+    }) ?? serializeChildren(serverWindow.document.documentElement, serverWindow));
 }
-function renderToString(elem) {
+function serializeInWindow(elem, serverWindow) {
     return (elem.getHTML?.({
         serializableShadowRoots: true,
-    }) ?? serializeChildren(elem));
+    }) ?? serializeChildren(elem, serverWindow));
 }
-function serializeChildren(node) {
-    return Array.from(node.childNodes, serializeNode).join("");
+function serializeChildren(node, serverWindow) {
+    return Array.from(node.childNodes, (child) => serializeNode(child, serverWindow)).join("");
 }
-function serializeNode(node) {
-    if (node instanceof window.Element)
+function serializeNode(node, serverWindow) {
+    if (node instanceof serverWindow.Element)
         return node.outerHTML;
-    return new window.XMLSerializer().serializeToString(node);
+    return new serverWindow.XMLSerializer().serializeToString(node);
+}
+function renderRootToString() {
+    return serializeRootInWindow(globalThis.window);
+}
+function renderToString(elem) {
+    return serializeInWindow(elem, globalThis.window);
 }
 function setRenderer(newRenderer) {
     if (serverWindow && newRenderer !== activeRenderer) {

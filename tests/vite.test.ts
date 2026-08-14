@@ -8,8 +8,10 @@ function transform(
   plugin: ReturnType<typeof hydroJS>,
   code: string,
   options?: { ssr?: boolean },
-) {
-  return plugin.transform(code, "component.tsx", options) as string | undefined;
+): Promise<{ code: string; map: unknown } | undefined> {
+  return plugin.transform(code, "component.tsx", options) as Promise<
+    { code: string; map: unknown } | undefined
+  >;
 }
 
 describe("vite integration", () => {
@@ -38,122 +40,168 @@ describe("vite integration", () => {
     }
   });
 
-  it("replaces the injected token with a client-side hydro-js import", () => {
-    const output = transform(
+  it("replaces the injected token with a client-side hydro-js import", async () => {
+    const output = await transform(
       hydroJS(),
       `${JSX_TOKEN}\nexport const view = <div />;`,
     );
 
-    expect(output).toContain('import { h } from "hydro-js";');
-    expect(output).not.toContain(JSX_TOKEN);
+    expect(output?.code).toContain('import { h } from "hydro-js";');
+    expect(output?.code).not.toContain(JSX_TOKEN);
+    expect(output?.map).toBeTruthy();
   });
 
-  it("replaces the injected token with an SSR getLibrary import", () => {
-    const output = transform(
+  it("replaces the injected token with an SSR getLibrary import", async () => {
+    const output = await transform(
       hydroJS(),
       `${JSX_TOKEN}\nexport const view = <div />;`,
       { ssr: true },
     );
 
-    expect(output).toContain(
+    expect(output?.code).toContain(
       'import { getLibrary } from "hydro-js-integrations/server";',
     );
-    expect(output).toContain("const { h } = await getLibrary();");
-    expect(output).not.toContain(JSX_TOKEN);
+    expect(output?.code).toContain("const { h } = await getLibrary();");
+    expect(output?.code).not.toContain(JSX_TOKEN);
   });
 
-  it("loads static hydro-js imports after initializing the SSR DOM", () => {
-    const output = transform(
+  it("loads static hydro-js imports after initializing the SSR DOM", async () => {
+    const output = await transform(
       hydroJS(),
       `${JSX_TOKEN}\nimport { reactive as signal } from "hydro-js";\nexport const view = <div />;`,
       { ssr: true },
     );
 
-    expect(output).not.toContain('from "hydro-js"');
-    expect(output).toContain(
+    expect(output?.code).not.toContain('from "hydro-js"');
+    expect(output?.code).toContain(
       "const { h, reactive: signal } = await getLibrary();",
     );
   });
 
-  it("does not duplicate an explicit h import in SSR output", () => {
-    const output = transform(
+  it("does not duplicate an explicit h import in SSR output", async () => {
+    const output = await transform(
       hydroJS(),
       `${JSX_TOKEN}\nimport { h, reactive } from "hydro-js";\nexport const view = <div />;`,
       { ssr: true },
     );
 
-    expect(output).toContain("const { h, reactive } = await getLibrary();");
-    expect(output).not.toContain("const { h, h,");
+    expect(output?.code).toContain(
+      "const { h, reactive } = await getLibrary();",
+    );
+    expect(output?.code).not.toContain("const { h, h,");
   });
 
-  it("sets the configured renderer before SSR imports hydro-js", () => {
-    const output = transform(
+  it("sets the configured renderer before SSR imports hydro-js", async () => {
+    const output = await transform(
       hydroJS({ renderer: "jsdom" }),
       `${JSX_TOKEN}\nexport const view = <div />;`,
       { ssr: true },
     );
 
-    expect(output).toContain(
+    expect(output?.code).toContain(
       'import { getLibrary, setRenderer } from "hydro-js-integrations/server";',
     );
-    expect(output).toContain(
+    expect(output?.code).toContain(
       'setRenderer("jsdom");const { h } = await getLibrary();',
     );
   });
 
-  it("augments an existing server integration import instead of duplicating it", () => {
-    const output = transform(
+  it("augments an existing server integration import instead of duplicating it", async () => {
+    const output = await transform(
       hydroJS({ renderer: "happy-dom" }),
       `${JSX_TOKEN}\nimport { renderToString } from "hydro-js-integrations/server";\nexport const view = <div />;`,
       { ssr: true },
     );
 
-    expect(output).toContain(
+    expect(output?.code).toContain(
       'import { renderToString, getLibrary, setRenderer } from "hydro-js-integrations/server";',
     );
-    expect(output).toContain(
+    expect(output?.code).toContain(
       'setRenderer("happy-dom");const { h } = await getLibrary();',
     );
-    expect(output).not.toMatch(
+    expect(output?.code).not.toMatch(
       /import \{ getLibrary, setRenderer \} from "hydro-js-integrations\/server"/,
     );
   });
 
-  it("adds callable imports when existing server imports use aliases", () => {
-    const output = transform(
+  it("preserves and calls aliases from existing server imports", async () => {
+    const output = await transform(
       hydroJS({ renderer: "jsdom" }),
       `${JSX_TOKEN}\nimport { getLibrary as loadHydro, setRenderer as chooseRenderer } from "hydro-js-integrations/server";\nexport const view = <div />;`,
       { ssr: true },
     );
 
-    expect(output).toContain(
-      "getLibrary as loadHydro, setRenderer as chooseRenderer, getLibrary, setRenderer",
+    expect(output?.code).toContain(
+      "getLibrary as loadHydro, setRenderer as chooseRenderer",
     );
-    expect(output).toContain(
-      'setRenderer("jsdom");const { h } = await getLibrary();',
+    expect(output?.code).toContain(
+      'chooseRenderer("jsdom");const { h } = await loadHydro();',
     );
   });
 
-  it("merges multiple existing server integration imports", () => {
-    const output = transform(
+  it("merges multiple existing server integration imports", async () => {
+    const output = await transform(
       hydroJS({ renderer: "jsdom" }),
       `${JSX_TOKEN}\nimport { renderToString } from "hydro-js-integrations/server";\nimport { getLibrary } from "hydro-js-integrations/server";\nexport const view = <div />;`,
       { ssr: true },
     );
 
-    expect(output?.match(/from "hydro-js-integrations\/server"/g)).toHaveLength(
-      1,
-    );
-    expect(output).toContain("renderToString, getLibrary, setRenderer");
+    expect(
+      output?.code.match(/from "hydro-js-integrations\/server"/g),
+    ).toHaveLength(1);
+    expect(output?.code).toContain("renderToString, getLibrary, setRenderer");
   });
 
-  it("transforms when another plugin prepends code before the JSX token", () => {
-    const output = transform(
+  it("transforms when another plugin prepends code before the JSX token", async () => {
+    const output = await transform(
       hydroJS(),
       `import "./setup";\n${JSX_TOKEN}\nexport const view = <div />;`,
     );
 
-    expect(output).toContain('import { h } from "hydro-js";');
-    expect(output).not.toContain(JSX_TOKEN);
+    expect(output?.code).toContain('import { h } from "hydro-js";');
+    expect(output?.code).not.toContain(JSX_TOKEN);
+  });
+
+  it("handles multiline imports and comments", async () => {
+    const output = await transform(
+      hydroJS(),
+      `${JSX_TOKEN}
+import /* leading */ {
+  reactive as signal, // inline
+  h,
+} from "hydro-js";
+export const view = <div />;`,
+      { ssr: true },
+    );
+
+    expect(output?.code).toContain(
+      "const { h, reactive: signal } = await getLibrary();",
+    );
+    expect(output?.code).not.toContain('from "hydro-js"');
+  });
+
+  it("rejects unsupported runtime hydro-js import forms", async () => {
+    await expect(
+      transform(
+        hydroJS(),
+        `${JSX_TOKEN}
+import * as hydro from "hydro-js";
+export const view = <div />;`,
+        { ssr: true },
+      ),
+    ).rejects.toThrow("namespace hydro-js import");
+  });
+
+  it("preserves type-only hydro-js imports", async () => {
+    const output = await transform(
+      hydroJS(),
+      `${JSX_TOKEN}
+import type { SomeType } from "hydro-js";
+export const view = <div />;`,
+      { ssr: true },
+    );
+
+    expect(output?.code).toContain('import { type SomeType } from "hydro-js";');
+    expect(output?.code).toContain("const { h } = await getLibrary();");
   });
 });

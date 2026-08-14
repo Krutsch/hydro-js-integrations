@@ -24,13 +24,15 @@ describe("Astro integration", () => {
 
     expect(plugin.name).toBe("hydro-js-plugin");
     expect(
-      plugin.transform(
-        "/*Add JSX*/;\nexport const view = <div />;",
-        "view.tsx",
-        {
-          ssr: true,
-        },
-      ),
+      (
+        await plugin.transform(
+          "/*Add JSX*/;\nexport const view = <div />;",
+          "view.tsx",
+          {
+            ssr: true,
+          },
+        )
+      )?.code,
     ).toContain('setRenderer("jsdom");const { h } = await getLibrary();');
   });
 

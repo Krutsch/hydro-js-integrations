@@ -1,5 +1,5 @@
-import { Window } from "happy-dom";
-import { JSDOM } from "jsdom";
+import type { Window } from "happy-dom";
+import type { JSDOM } from "jsdom";
 export type Renderer = "happy-dom" | "jsdom";
 export type RendererOptions = ConstructorParameters<typeof Window>[0] | ConstructorParameters<typeof JSDOM>;
 export type ServerDOMOptions = {
@@ -13,8 +13,8 @@ export type ServerDOMContext = {
     window: typeof globalThis.window;
     document: Document;
     library: typeof import("hydro-js");
-    serializeRoot: typeof renderRootToString;
-    serialize: typeof renderToString;
+    serializeRoot: () => string;
+    serialize: (elem: Element) => string;
 };
 declare function getLibrary(options?: RendererOptions): Promise<typeof import("hydro-js")>;
 declare function withServerDOM<T>(options: ServerDOMOptions, callback: (context: ServerDOMContext) => T | Promise<T>): Promise<T>;

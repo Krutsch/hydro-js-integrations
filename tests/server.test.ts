@@ -150,6 +150,28 @@ describe("server integration", () => {
     });
   });
 
+  it("serializes through the session window held by its context", async () => {
+    const server = await loadServer();
+    server.setRenderer("jsdom");
+
+    await server.withServerDOM({}, ({ window, document, serialize }) => {
+      const node = document.createElement("p");
+      node.append(document.createTextNode("Context"));
+      const sessionWindow = window;
+
+      globalThis.window = new Proxy(sessionWindow, {
+        get(target, property) {
+          if (property === "XMLSerializer") {
+            return undefined;
+          }
+          return Reflect.get(target, property);
+        },
+      });
+
+      expect(serialize(node)).toBe("Context");
+    });
+  });
+
   it("locks renderer configuration after initialization", async () => {
     const server = await loadServer();
     await server.withServerDOM({}, () => undefined);
@@ -166,9 +188,7 @@ describe("server integration", () => {
     const server = await loadServer();
 
     await expect(
-      server.withServerDOM({}, () =>
-        server.withServerDOM({}, () => "nested"),
-      ),
+      server.withServerDOM({}, () => server.withServerDOM({}, () => "nested")),
     ).rejects.toThrow("withServerDOM() cannot be nested");
   });
 

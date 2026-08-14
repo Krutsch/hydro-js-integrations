@@ -1,6 +1,6 @@
 {
   "name": "hydro-js-integrations",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Integrations for Vite and Astro and more TBC",
   "type": "module",
   "exports": {
@@ -58,15 +58,17 @@
   "devDependencies": {
     "@types/jsdom": "^30.0.0",
     "@types/node": "^26.2.0",
-    "astro": "^7.2.1",
+    "astro": "^7.2.2",
     "hydro-js": "^1.9.5",
     "typescript": "^7.0.2",
     "vite": "^8.2.1",
     "vitest": "^4.1.10"
   },
   "dependencies": {
+    "es-module-lexer": "^2.3.1",
     "happy-dom": "^20.11.2",
-    "jsdom": "^30.0.1"
+    "jsdom": "^30.0.1",
+    "magic-string": "^1.2.0"
   },
   "allowScripts": {
     "esbuild": true

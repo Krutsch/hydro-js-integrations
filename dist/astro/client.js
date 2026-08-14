@@ -1,22 +1,22 @@
 import { html, render, setReuseElements } from "hydro-js";
+import { adaptComponent } from "./adapt.js";
 setReuseElements(false);
 let elementMap = new WeakMap();
 export default (element) => async (Component, props, { default: children, ...slotted }) => {
     if (!element.hasAttribute("ssr"))
         return;
-    const slots = [];
-    for (const [key, value] of Object.entries(slotted)) {
-        const elem = html `<astro-slot name="${key}">${value}</astro-slot>`;
-        slots.push(elem);
-    }
     const place = elementMap.get(element);
-    const node = typeof Component === "function"
-        ? Component({
-            ...props,
-            ...(children ? { children: html `${String(children)}` } : {}),
-        })
-        : html `<${Component} ${props}>${children ? String(children) : ""}</${Component}>`;
-    node.append(...slots);
+    const node = adaptComponent({
+        Component,
+        props,
+        children,
+        slotted,
+        document,
+        html,
+        createSlot: (name, value) => html `<astro-slot name="${name}"
+          >${value}</astro-slot
+        >`,
+    });
     let unmount;
     if (place) {
         unmount = render(node, place);

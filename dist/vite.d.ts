@@ -21,7 +21,10 @@ export default function hydroJS({ renderer }?: {
             jsxInject: string;
         };
     };
-    transform(code: string, _id: string, options?: {
+    transform(code: string, id: string, options?: {
         ssr?: boolean;
-    }): string | undefined;
+    }): Promise<{
+        code: string;
+        map: import("magic-string").SourceMap;
+    } | undefined>;
 };

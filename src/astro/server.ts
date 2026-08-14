@@ -3,6 +3,7 @@ import type {
   NamedSSRLoadedRendererValue,
 } from "astro";
 import { withServerDOM } from "../server.js";
+import { adaptComponent } from "./adapt.js";
 
 async function check(Component: any) {
   if (typeof Component === "string") return true;
@@ -23,29 +24,16 @@ async function renderToStaticMarkup(
     const { html, render } = library;
     const needsHydrate = metadata?.astroStaticSlot ? !!metadata.hydrate : true;
     const tagName = needsHydrate ? "astro-slot" : "astro-static-slot";
-
-    const slots: HTMLSlotElement[] = [];
-    for (const [key, value] of Object.entries(slotted)) {
-      slots.push(
-        html`<${tagName} name="${key}">${value}</${tagName}>` as HTMLSlotElement,
-      );
-    }
-
-    let node =
-      typeof Component === "function"
-        ? (Component({
-            ...props,
-            ...(children ? { children: html`${String(children)}` } : {}),
-          }) as ReturnType<typeof html>)
-        : html`<${Component} ${props}>${
-            children ? String(children) : ""
-          }</${Component}>`;
-    if (isTextNode(node)) {
-      const fragment = document.createDocumentFragment();
-      fragment.append(node);
-      node = fragment;
-    }
-    node.append(...slots);
+    const node = adaptComponent({
+      Component,
+      props,
+      children,
+      slotted,
+      document,
+      html,
+      createSlot: (name, value) =>
+        html`<${tagName} name="${name}">${value}</${tagName}>` as HTMLSlotElement,
+    });
 
     const wrapper = html`<div>${node}</div>` as HTMLDivElement;
     const unmount = render(wrapper);

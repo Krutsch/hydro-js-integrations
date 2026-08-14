@@ -1,11 +1,12 @@
-import { Window } from "happy-dom";
-import { JSDOM } from "jsdom";
 import { AsyncLocalStorage } from "node:async_hooks";
+import { createRenderer } from "./renderer.js";
+import type { Window } from "happy-dom";
+import type { JSDOM } from "jsdom";
 
 export type Renderer = "happy-dom" | "jsdom";
 export type RendererOptions =
-  | ConstructorParameters<typeof Window>[0]
-  | ConstructorParameters<typeof JSDOM>;
+  ConstructorParameters<typeof Window>[0] | ConstructorParameters<typeof JSDOM>;
+
 export type ServerDOMOptions =
   | {
       renderer?: "happy-dom";
@@ -19,8 +20,8 @@ export type ServerDOMContext = {
   window: typeof globalThis.window;
   document: Document;
   library: typeof import("hydro-js");
-  serializeRoot: typeof renderRootToString;
-  serialize: typeof renderToString;
+  serializeRoot: () => string;
+  serialize: (elem: Element) => string;
 };
 
 let renderer: Renderer = "happy-dom";
@@ -53,25 +54,12 @@ async function setRendererInternal(
     return;
   }
 
-  const rendererOptions = options ?? (engine === "happy-dom" ? {} : []);
-  let window;
-  if (engine === "happy-dom") {
-    window = new Window(
-      rendererOptions as ConstructorParameters<typeof Window>[0],
-    );
-    window.document.write("");
-    await window.happyDOM.waitUntilComplete();
-  } else if (engine === "jsdom") {
-    window = new JSDOM(
-      ...(rendererOptions as ConstructorParameters<typeof JSDOM>),
-    ).window;
-  }
-
-  if (!window) throw new Error(`Unsupported renderer: ${engine}`);
+  const session = await createRenderer(engine, options);
+  await session.ready;
 
   renderer = engine;
   activeRenderer = engine;
-  serverWindow = window as unknown as typeof globalThis.window;
+  serverWindow = session.window;
 
   Object.assign(globalThis, {
     window: serverWindow,
@@ -98,14 +86,15 @@ function withServerDOM<T>(
       const library = await getLibrary();
       resetServerDOM(library);
       const session = { active: true };
+      const sessionWindow = serverWindow!;
       try {
         return await serverDOMSession.run(session, () =>
           callback({
-            window: serverWindow!,
-            document: serverWindow!.document,
+            window: sessionWindow,
+            document: sessionWindow.document,
             library,
-            serializeRoot: renderRootToString,
-            serialize: renderToString,
+            serializeRoot: () => serializeRootInWindow(sessionWindow),
+            serialize: (element) => serializeInWindow(element, sessionWindow),
           }),
         );
       } finally {
@@ -144,31 +133,52 @@ function resetServerDOM(library: typeof import("hydro-js")) {
   library.setInsertDiffing(false);
   library.setShouldSetReactivity(true);
   library.setIgnoreIsConnected(false);
-  serverWindow.document.documentElement.innerHTML = "<head></head><body></body>";
+  serverWindow.document.documentElement.innerHTML =
+    "<head></head><body></body>";
 }
 
-function renderRootToString() {
+function serializeRootInWindow(serverWindow: typeof globalThis.window) {
   return (
-    document.documentElement.getHTML?.({
+    serverWindow.document.documentElement.getHTML?.({
       serializableShadowRoots: true,
-    }) ?? serializeChildren(document.documentElement)
+    }) ?? serializeChildren(serverWindow.document.documentElement, serverWindow)
   );
 }
-function renderToString(elem: Element) {
+
+function serializeInWindow(
+  elem: Element,
+  serverWindow: typeof globalThis.window,
+) {
   return (
     elem.getHTML?.({
       serializableShadowRoots: true,
-    }) ?? serializeChildren(elem)
+    }) ?? serializeChildren(elem, serverWindow)
   );
 }
 
-function serializeChildren(node: ParentNode) {
-  return Array.from(node.childNodes, serializeNode).join("");
+function serializeChildren(
+  node: ParentNode,
+  serverWindow: typeof globalThis.window,
+) {
+  return Array.from(node.childNodes, (child) =>
+    serializeNode(child, serverWindow),
+  ).join("");
 }
 
-function serializeNode(node: ChildNode) {
-  if (node instanceof window.Element) return node.outerHTML;
-  return new window.XMLSerializer().serializeToString(node);
+function serializeNode(
+  node: ChildNode,
+  serverWindow: typeof globalThis.window,
+) {
+  if (node instanceof serverWindow.Element) return node.outerHTML;
+  return new serverWindow.XMLSerializer().serializeToString(node);
+}
+
+function renderRootToString() {
+  return serializeRootInWindow(globalThis.window);
+}
+
+function renderToString(elem: Element) {
+  return serializeInWindow(elem, globalThis.window);
 }
 
 function setRenderer(newRenderer: Renderer) {

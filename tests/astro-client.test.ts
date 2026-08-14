@@ -125,6 +125,23 @@ describe("Astro client hydrator", () => {
     );
   });
 
+  it("normalizes text component results before attaching slots", async () => {
+    const createHydrator = await loadHydrator();
+    const host = createHost();
+    host.setAttribute("ssr", "");
+
+    await createHydrator(host)(
+      () => document.createTextNode("Text"),
+      {},
+      { toolbar: "Tools" },
+    );
+
+    expect(host.textContent).toContain("Text");
+    expect(host.querySelector('astro-slot[name="toolbar"]')?.textContent).toBe(
+      "Tools",
+    );
+  });
+
   it("preserves named slot keys during hydration", async () => {
     const createHydrator = await loadHydrator();
     const host = createHost();
